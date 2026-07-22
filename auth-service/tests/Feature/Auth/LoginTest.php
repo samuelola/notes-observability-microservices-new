@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Hash;
 use Modules\Auth\Application\Contracts\EventPublisherInterface;
 use Modules\Auth\Infrastructure\Persistence\Models\User;
 
-
 uses(RefreshDatabase::class);
 
 it('logs in successfully with valid credentials', function () {
