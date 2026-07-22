@@ -1,48 +1,49 @@
 FROM php:8.3-fpm
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libonig-dev libxml2-dev libzip-dev zlib1g-dev g++ \
-    && rm -rf /var/lib/apt/lists/*
+    git \
+    curl \
+    unzip \
+    zip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    && docker-php-ext-install \
+        pdo_mysql \
+        mbstring \
+        bcmath \
+        exif \
+        gd \
+        zip \
+        pcntl \
+        sockets
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip sockets
-
-# Install Redis
+# Redis extension
 RUN pecl install redis \
-    && docker-php-ext-enable redis    
+    && docker-php-ext-enable redis
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
+# Copy entire application
+COPY . .
 
-#
-# Copy composer files FIRST
-# This improves Docker cache significantly
-#
-COPY composer.json composer.lock ./
-
+# Install Composer dependencies
 RUN composer install \
     --no-dev \
     --prefer-dist \
-    --no-interaction \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-interaction
 
-# Copy application
-COPY . .    
-
-RUN php artisan config:cache
-RUN php artisan route:cache
-RUN php artisan view:cache
-
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
+# Permissions
 RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-EXPOSE 9000    
+EXPOSE 9000
 
 CMD ["php-fpm"]
