@@ -27,9 +27,10 @@ RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-RUN php artisan config:cache
-RUN php artisan route:cache
-RUN php artisan view:cache    
+# RUN php artisan config:cache
+# RUN php artisan route:cache
+# RUN php artisan view:cache    
+
     
 EXPOSE 9000
 

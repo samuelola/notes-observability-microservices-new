@@ -74,6 +74,12 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
+      - name: Clear
+        run: php artisan optimize:clear 
+
+      - name: List routes
+        run: php artisan route:list  
+
       - name: Run Laravel Pint
         run: vendor/bin/pint --test
 
