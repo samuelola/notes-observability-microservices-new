@@ -1,0 +1,8 @@
+For a Laravel project, the typical setup is:
+
+Service	    Testing Recommendation
+MySQL	    GitHub Actions MySQL service
+Redis	    GitHub Actions Redis service (optional)
+RabbitMQ	Mock it (best) or start RabbitMQ service
+Queue	    fake
+Events	    fake/mock

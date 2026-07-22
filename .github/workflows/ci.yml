@@ -15,6 +15,22 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: auth_testing
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     strategy:
       matrix:
         service:
@@ -38,10 +54,15 @@ jobs:
           coverage: none
 
       - name: Copy .env
+        run: cp .env.example .env
+
+      - name: Configure testing DB
         run: |
-          if [ -f .env.example ]; then
-            cp .env.example .env
-          fi
+          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
+          sed -i 's/DB_DATABASE=.*/DB_DATABASE=auth_testing/' .env
+          sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
+          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env  
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress

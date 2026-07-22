@@ -1,10 +1,27 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Auth\Application\Contracts\EventPublisherInterface;
 
 uses(RefreshDatabase::class);
 
 it('registers a new user successfully', function () {
+
+    
+    $publisher = Mockery::mock(EventPublisherInterface::class);
+
+    $publisher
+        ->shouldReceive('publish')
+        ->once()
+        ->with(
+            'user.registered',
+            Mockery::type('array')
+        );
+
+    $this->app->instance(
+        EventPublisherInterface::class,
+        $publisher
+    );
 
     $response = $this->postJson('/api/v1/register', [
 
