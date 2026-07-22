@@ -1,0 +1,213 @@
+What is tracing?
+
+Logs tell you what happened.
+
+Metrics tell you how often it happened.
+
+Tracing tells you where the request spent its time.
+
+
+Tracing lets you follow that exact request.
+
+Grafana
+
+↓
+
+Tempo
+
+↓
+
+OpenTelemetry Collector
+
+↓
+
+Laravel Services
+
+
+Components
+1. OpenTelemetry SDK
+
+Added to each Laravel service.
+
+It creates traces.
+
+Example:
+
+POST /login
+
+↓
+
+Trace starts
+
+↓
+
+Validate user
+
+↓
+
+Generate JWT
+
+↓
+
+Publish RabbitMQ message
+
+↓
+
+Trace ends
+2. OpenTelemetry Collector
+
+Receives traces from every service.
+
+Gateway
+
+↓
+
+Collector
+
+↑
+
+Notes
+
+↑
+
+Auth
+3. Tempo
+
+Stores traces.
+
+Think of it as:
+
+Loki
+
+stores logs
+
+Tempo
+
+stores traces
+
+Prometheus
+
+stores metrics
+4. Grafana
+
+Now has
+
+Metrics
+
+Logs
+
+Traces
+
+in one place.
+
+
+What you'll see
+
+Open a trace:
+
+POST /api/v1/notes
+
+Total
+
+112 ms
+
+Gateway
+
+3 ms
+
+Auth
+
+24 ms
+
+Notes
+
+40 ms
+
+MySQL
+
+20 ms
+
+RabbitMQ
+
+8 ms
+
+Redis
+
+5 ms
+
+Consumer
+
+12 ms
+
+You instantly know where the time went.
+
+
+
+                 Client
+                    │
+                    ▼
+              API Gateway
+                    │
+      ┌─────────────┴──────────────┐
+      ▼                            ▼
+ Auth Service                 Notes Service
+      │                            │
+      ▼                            ▼
+ RabbitMQ                     Redis Queue
+      │
+      ▼
+ Consumers
+
+--------------------------------------------
+
+Logs
+
+Laravel
+
+↓
+
+Promtail
+
+↓
+
+Loki
+
+↓
+
+Grafana
+
+--------------------------------------------
+
+Metrics
+
+Laravel
+
+↓
+
+Prometheus
+
+↓
+
+Grafana
+
+--------------------------------------------
+
+Traces
+
+Laravel
+
+↓
+
+OpenTelemetry
+
+↓
+
+Collector
+
+↓
+
+Tempo
+
+↓
+
+Grafana

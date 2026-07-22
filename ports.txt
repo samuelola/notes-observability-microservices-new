@@ -1,0 +1,46 @@
+For nginx-exporter
+
+http://localhost:9113/metrics
+
+For rabbitmq
+
+http://localhost:15672
+
+For Grafana
+
+http://localhost:3000
+
+
+For Prometheus
+http://localhost:9090
+
+
+Auth
+http://localhost:8000/metrics
+Notes
+http://localhost:8001/metrics
+RabbitMQ exporter
+http://localhost:9419/metrics
+Redis exporter
+http://localhost:9121/metrics
+cAdvisor
+http://localhost:8080/metrics
+Prometheus
+http://localhost:9090/targets
+Grafana
+http://localhost:3000
+
+Jaeger
+http://localhost:16686
+
+
+Prometheus scrapes the services metrics
+http://localhost:9090/targets
+
+Swagger Documentation for auth-service
+http://localhost:8000/api/documentation
+
+The next step is simply querying those metrics in Grafana
+
+The only challenge is that not every metric exists yet. Some come automatically from exporters, 
+while others must be exposed by your Laravel applications.

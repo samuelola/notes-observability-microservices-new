@@ -1,0 +1,113 @@
+name: CI/CD Pipeline Notes Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+####################################################
+# QUALITY
+####################################################
+
+  quality:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - notes-service
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, pdo_mysql, redis
+          coverage: none
+
+      - name: Copy .env
+        run: |
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          fi
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Run Laravel Pint
+        run: vendor/bin/pint --test
+
+      - name: Run Unit Tests
+        run: php artisan test --testsuite=Unit
+
+      - name: Run Feature Tests
+        run: php artisan test --testsuite=Feature
+
+      - name: Generate Swagger Documentation
+        run: php artisan l5-swagger:generate
+
+
+####################################################
+# BUILD
+####################################################
+  build-and-push:
+    
+    needs: quality
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Log in to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+####################################################
+# Build and Push Docker AUTH IMAGE
+####################################################
+
+      # Build Docker image
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/auth-service:latest .
+
+      # Push Docker image
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/auth-service:latest
+
+
+####################################################
+# Build and Push Docker NOTES IMAGE
+####################################################
+      # Build Docker image
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/notes-service:latest .
+
+      # Push Docker image
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/notes-service:latest

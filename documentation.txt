@@ -1,0 +1,26 @@
+draw.io (diagrams.net)
+
+https://app.diagrams.net/
+
+A good final project documentation
+
+If I were documenting your project, I'd produce about seven diagrams:
+
+System Context – Users, Gateway, Auth Service, Notes Service, external clients.
+Container Diagram – Services, databases, Jaeger, Prometheus, Grafana, Docker.
+Clean Architecture Diagram – Presentation → Application → Domain → Infrastructure for a service.
+CQRS Flow – Commands, Queries, Handlers, Repositories.
+Deployment Diagram – Docker Compose on the VPS with all running containers.
+CI/CD Pipeline – GitHub → GitHub Actions → Docker Hub → Production Server.
+Observability Flow – Services → OpenTelemetry → Jaeger, and /metrics → Prometheus → Grafana.
+
+
+A tip that helps most beginners
+
+Don't start by drawing boxes. Start by asking:
+
+What components exist? (Gateway, Auth Service, Notes Service, MySQL, etc.)
+Who communicates with whom? (Gateway → Auth, Auth → MySQL, Prometheus → /metrics.)
+Which components belong together? (Everything on the production server goes inside one container labeled "Production VPS".)
+
+Once you answer those three questions, the diagram almost draws itself. This is exactly how software architects approach system diagrams.

@@ -1,0 +1,152 @@
+Clean Architecture
+
+In fact, many successful applications use Clean Architecture without DDD.
+
+Clean Architecture solves this:
+Organizes code into layers
+Focuses on dependency direction
+Solves architectural concerns
+Works for simple and complex apps
+
+1. Domain
+
+This is the heart of the application.
+
+It contains business rules and should have no dependency on Laravel.
+
+Domain/
+├── Entities/
+├── ValueObjects/
+├── Aggregates/
+├── Repositories/
+├── Events/
+└── Services/
+
+class Order
+{
+    public function confirm()
+    {
+        if (!$this->paymentReceived()) {
+            throw new PaymentRequired();
+        }
+
+        $this->status = OrderStatus::Confirmed;
+    }
+}
+
+
+2. Application
+
+This layer coordinates use cases.
+
+It answers:
+
+What should happen when a user wants to confirm an order?
+
+Application/
+├── Commands/
+├── Queries/
+├── DTOs/
+├── UseCases/
+└── Handlers/
+
+class ConfirmOrderHandler
+{
+    public function handle(ConfirmOrderCommand $command)
+    {
+        $order = $this->repository->find($command->orderId);
+
+        $order->confirm();
+
+        $this->repository->save($order);
+    }
+}
+
+
+Notice:
+
+no HTTP
+no database queries
+just coordinating the use case
+
+
+3. Infrastructure
+
+Infrastructure contains technical details.
+
+Infrastructure/
+├── Persistence/
+├── Queue/
+├── Mail/
+├── Cache/
+├── PaymentGateway/
+└── Repositories/
+
+Example:
+
+class EloquentOrderRepository implements OrderRepository
+{
+    public function find($id)
+    {
+        return OrderModel::findOrFail($id);
+    }
+}
+
+Laravel-specific code belongs here.
+
+4. Presentation
+
+Presentation is how users interact with the system.
+
+Examples:
+
+Presentation/
+├── Http/
+│   ├── Controllers/
+│   ├── Requests/
+│   └── Resources/
+├── Console/
+└── GraphQL/
+
+Example:
+
+class OrderController
+{
+    public function confirm(
+        ConfirmOrderRequest $request,
+        ConfirmOrderHandler $handler
+    ) {
+        $handler->handle(
+            new ConfirmOrderCommand($request->orderId)
+        );
+
+        return response()->json();
+    }
+}
+
+The controller is intentionally thin.
+
+Request Flow
+HTTP Request
+      │
+      ▼
+Presentation
+      │
+      ▼
+Application
+      │
+      ▼
+Domain
+      │
+      ▼
+Infrastructure
+      │
+      ▼
+Database
+
+The important rule is that dependencies point inward:
+
+Presentation depends on Application.
+Application depends on Domain.
+Infrastructure implements interfaces defined by the Domain or Application.
+The Domain depends on nothing else

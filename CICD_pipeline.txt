@@ -1,0 +1,193 @@
+Example Pipeline
+
+Push
+ │
+ ▼
+Checkout
+ │
+ ▼
+Install Composer
+ │
+ ▼
+Generate APP_KEY
+ │
+ ▼
+Run Migrations
+ │
+ ▼
+Unit Tests
+ │
+ ▼
+Feature Tests
+ │
+ ▼
+PHPStan
+ │
+ ▼
+Laravel Pint
+ │
+ ▼
+Docker Build
+ │
+ ▼
+Push Docker Image
+ │
+ ▼
+Deploy Server
+
+
+Stage 1 — Run Tests
+
+Checkout code
+↓
+Install PHP dependencies
+↓
+Copy .env.testing
+↓
+Generate APP_KEY
+↓
+Start MySQL
+↓
+Run migrations
+↓
+Run Unit Tests
+↓
+Run Feature Tests
+
+Stage 2 — Static Analysis
+
+Before tests, run
+
+Example
+
+composer pint --test
+
+vendor/bin/phpstan analyse
+
+Stage 3 — Docker Build
+
+Once tests pass
+
+docker build
+
+for each service.
+
+Example
+
+auth-service
+notes-service
+gateway
+
+Each gets tagged
+
+auth-service:latest
+
+notes-service:latest
+
+or better
+
+auth-service:${GITHUB_SHA}
+
+Stage 4 — Push Images
+
+Push them to
+
+Docker Hub
+
+or
+
+GitHub Container Registry
+
+Example
+
+docker push yourrepo/auth-service:${GITHUB_SHA}
+
+docker push yourrepo/notes-service:${GITHUB_SHA}
+
+Stage 5 — Deploy
+
+On your VPS or cloud server
+
+docker compose pull
+
+docker compose up -d
+
+GitHub Actions Structure
+
+For a microservice architecture I usually recommend
+
+.github/
+    workflows/
+
+        auth.yml
+
+        notes.yml
+
+        gateway.yml
+
+instead of one huge workflow.
+
+Each service deploys independently.
+
+
+Secrets
+
+GitHub Secrets should contain
+
+DOCKER_USERNAME
+
+DOCKER_PASSWORD
+
+SSH_HOST
+
+SSH_USER
+
+SSH_PRIVATE_KEY
+
+APP_KEY
+
+Never commit these.
+
+
+Docker Compose on the Server
+
+When deployment happens, your server simply runs
+
+docker compose pull
+
+docker compose up -d
+
+docker image prune -f
+
+No rebuilding on production.
+
+
+                 GitHub
+                    │
+          GitHub Actions
+                    │
+        ┌───────────┴────────────┐
+        │                        │
+ Run Tests                 Build Docker
+        │                        │
+        └───────────┬────────────┘
+                    │
+             Push Images
+                    │
+              Docker Hub
+                    │
+             Production VPS
+                    │
+         docker compose pull
+                    │
+         docker compose up -d
+                    │
+     ┌──────────┬───────────┬────────────┐
+     │          │           │            │
+ Auth      Notes      Gateway      Jaeger
+     │          │           │            │
+     └──────────┼───────────┴────────────┘
+                │
+           Prometheus
+                │
+             Grafana

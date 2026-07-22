@@ -1,0 +1,75 @@
+What is CI/CD?
+
+CI/CD stands for:
+
+CI (Continuous Integration): Every code change is automatically built and tested.
+CD (Continuous Delivery/Deployment): If the build passes, a new version is automatically deployed.
+
+For your project:
+
+
+Developer
+    │
+    ▼
+Push to GitHub
+    │
+    ▼
+GitHub Actions
+    │
+ ┌──┴───────────────┐
+ │                  │
+Run Tests      Build Docker Images
+ │                  │
+ └──────┬───────────┘
+        ▼
+ Push Images to Docker Hub
+        │
+        ▼
+ Production VPS
+        │
+docker compose pull
+docker compose up -d
+
+
+
+Your pipeline stages
+
+A good pipeline for your project should be:
+
+Stage 1
+Checkout Repository
+
+↓
+
+Stage 2
+Install PHP dependencies
+
+↓
+
+Stage 3
+Run Unit Tests
+
+↓
+
+Stage 4
+Run Feature Tests
+
+↓
+
+Stage 5
+Build Docker Images
+
+↓
+
+Stage 6
+Push Images to Docker Hub
+
+↓
+
+Stage 7
+Deploy to VPS
+
+↓
+
+Stage 8
+Health Check

@@ -1,0 +1,13 @@
+At this point, the next step is to build a Grafana dashboard using these metrics so you can visualize:
+
+Requests/sec
+Average response time
+500/429 error rates
+RabbitMQ queue depth
+Redis queue size
+CPU usage
+Memory usage
+Login success rate
+Notes created today
+
+This will give you the production-style monitoring dashboard you were aiming for.

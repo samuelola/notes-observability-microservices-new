@@ -1,0 +1,143 @@
+Phase 1: Decide the deployment strategy
+
+note-observability-microservices/
+
+├── auth-service/
+├── notes-service/
+├── gateway/
+├── docker-compose.yml
+├── prometheus/
+├── .github/
+
+That means:
+
+one Git repository
+one Docker Compose
+one VPS
+one deployment
+
+This is called a Monorepo CI/CD.
+
+
+Phase 2: Overall Pipeline
+
+This is what will be build
+
+Developer
+
+↓
+
+git push
+
+↓
+
+GitHub
+
+↓
+
+GitHub Actions
+
+↓
+
+Checkout
+
+↓
+
+Build Services
+
+↓
+
+Run Tests
+
+↓
+
+Push Images
+
+↓
+
+SSH VPS
+
+↓
+
+docker compose pull
+
+↓
+
+docker compose up -d
+
+↓
+
+Health Check
+
+
+Phase 3: Create Docker Hub repositories
+
+Create repositories such as:
+
+yourname/auth-service
+
+yourname/notes-service
+
+yourname/gateway
+
+
+Phase 4: Modify docker-compose for Production
+
+
+Currently you use:
+
+auth:
+  build:
+    context: ./auth-service
+
+This works for development only.
+
+Production should use images.
+
+Example:
+
+auth:
+  image: yourname/auth-service:latest
+
+
+Likewise:
+
+notes:
+  image: yourname/notes-service:latest
+
+
+Gateway:
+
+gateway:
+  image: yourname/gateway:latest
+
+Leave build: in your local compose, but create a separate docker-compose.prod.yml for the VPS.
+
+
+Phase 5: GitHub Secrets
+
+Go to
+
+Settings
+
+↓
+
+Secrets
+
+↓
+
+Actions
+
+
+Create:
+
+DOCKER_USERNAME
+
+DOCKER_PASSWORD
+
+SSH_HOST
+
+SSH_USER
+
+SSH_PRIVATE_KEY
+

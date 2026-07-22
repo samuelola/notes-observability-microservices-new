@@ -1,0 +1,62 @@
+My current Architecture
+
+
+The architecture
+
+Your former stack
+
+                         Client
+                           │
+                           ▼
+                   Nginx API Gateway
+                           │
+          ┌────────────────┴────────────────┐
+          ▼                                 ▼
+     Auth Service                     Notes Service
+          │                                 │
+          ├────────────┐                    │
+          ▼            ▼                    ▼
+       RabbitMQ      Redis               MySQL
+          │
+      Queue Worker
+
+────────────────────────────────────────────────────
+
+                  Promtail
+                     │
+                     ▼
+                    Loki
+                     |
+                     ▼
+                  Grafana
+
+            
+            
+            
+            Your stack will become fter Prometheus:
+
+
+                    Client
+                       │
+                       ▼
+                Nginx Gateway
+                       │
+      ┌────────────────┴───────────────┐
+      ▼                                ▼
+ Auth Service                    Notes Service
+      │                                │
+      ├────────── Metrics ──────────────┤
+      │                                │
+      ▼                                ▼
+                Prometheus
+                     │
+      ┌──────────────┼──────────────┐
+      ▼              ▼              ▼
+ RabbitMQ       Redis Exporter   cAdvisor
+ Exporter
+                     │
+                     ▼
+                  Grafana
+
+
+

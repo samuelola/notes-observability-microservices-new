@@ -1,0 +1,150 @@
+In production, it's just as important to understand 
+what your system is doing as it is to build the services themselves.
+
+Observability has three main pillars:
+
+                 Observability
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+     Logging      Metrics      Tracing
+
+
+     before your architecture
+                         Client
+                       │
+                       ▼
+                Nginx API Gateway
+                       │
+          ┌────────────┴────────────┐
+          ▼                         ▼
+     Auth Service             Notes Service
+          │                         │
+       MySQL                    MySQL
+          │
+      RabbitMQ
+          │
+        Redis
+          │
+     Queue Workers
+
+
+
+
+     After Observability
+
+                             Client
+                           │
+                           ▼
+                   Nginx API Gateway
+                           │
+          ┌────────────────┴────────────────┐
+          ▼                                 ▼
+     Auth Service                     Notes Service
+          │                                 │
+          ├────────────┐                    │
+          ▼            ▼                    ▼
+       RabbitMQ      Redis               MySQL
+          │
+      Queue Worker
+
+────────────────────────────────────────────────────
+
+                Prometheus
+                     │
+                     ▼
+                  Grafana
+
+Logs
+Auth ─────┐
+Notes ────┼────► Loki
+Gateway ──┘
+
+Tracing
+Gateway → Auth → RabbitMQ → Notes
+          │
+          ▼
+       OpenTelemetry
+          │
+          ▼
+        Jaeger
+
+
+FROM THIS
+        Auth Service
+ └── storage/logs/laravel.log
+
+Notes Service
+ └── storage/logs/laravel.log
+
+Gateway
+ └── nginx logs
+
+
+ TO THIS
+
+
+               Auth Service
+                    │
+              Notes Service
+                    │
+              API Gateway
+                    │
+                Promtail
+                    │
+                    ▼
+                  Loki
+                    │
+                    ▼
+                 Grafana
+
+
+                 Notice that Promtail is important. It reads log files and sends them to Loki.
+                 Grafana the query Loki
+
+
+Metrics
+
+
+                Client
+                   │
+                   ▼
+              API Gateway
+                   │
+        ┌──────────┴──────────┐
+        ▼                     ▼
+ Auth Service           Notes Service
+        │                     │
+        │                     │
+        ├──────────────┐      │
+        ▼              ▼      ▼
+     Metrics        Logs    RabbitMQ
+        │             │
+        ▼             ▼
+   Prometheus      Promtail
+        │             │
+        └──────┬──────┘
+               ▼
+            Grafana
+
+
+Notice:
+
+Promtail → Loki → Logs
+Prometheus → Metrics
+                 
+
+Prometheus
+
+Prometheus is to metrics what Loki is to logs.
+
+It periodically asks every service:
+
+"How are you doing?"
+
+For example:
+
+Every 15 seconds
+
+↓
+
+GET /metrics                 

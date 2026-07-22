@@ -1,0 +1,53 @@
+--progress is a global compose flag, better use `docker compose --progress xx build ...
+ Image note-docker-rabbitqm-microservices-notes Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 659B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 851B 0.0s done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/composer:latest
+#3 ...
+
+#4 [auth] library/composer:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#5 [auth] library/php:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [internal] load metadata for docker.io/library/php:8.3-fpm
+#6 ...
+
+#3 [internal] load metadata for docker.io/library/composer:latest
+#3 DONE 3.1s
+
+#6 [internal] load metadata for docker.io/library/php:8.3-fpm
+#6 DONE 3.7s
+
+#7 [internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [internal] load build context
+#8 DONE 0.0s
+
+#9 FROM docker.io/library/composer:latest@sha256:7725eb4545c438629ae8bde3ef0bb9a5038ef566126ad878442a69007242d267
+#9 resolve docker.io/library/composer:latest@sha256:7725eb4545c438629ae8bde3ef0bb9a5038ef566126ad878442a69007242d267 0.1s done
+#9 CACHED
+
+#10 [stage-0  1/11] FROM docker.io/library/php:8.3-fpm@sha256:efaea017a0c269b359a5db12987d221eac127e192f98b60bb849538d2d9a3253
+#10 resolve docker.io/library/php:8.3-fpm@sha256:efaea017a0c269b359a5db12987d221eac127e192f98b60bb849538d2d9a3253 0.1s done
+#10 CACHED
+
+#8 [internal] load build context
+#8 transferring context: 975.05kB 1.0s done
+#8 DONE 1.1s
+
+#11 [stage-0  2/11] RUN apt-get update && apt-get install -y     git curl zip unzip libpng-dev libonig-dev libxml2-dev libzip-dev zlib1g-dev g++     && rm -rf /var/lib/apt/lists/*
+#11 1.598 Hit:1 http://deb.debian.org/debian trixie InRelease
+#11 1.747 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#11 2.053 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#11 2.490 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9671 kB]
+

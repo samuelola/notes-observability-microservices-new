@@ -1,0 +1,71 @@
+events {}
+
+http {
+
+    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+
+    upstream auth_service {
+        server auth-service:8000;
+    }
+
+    upstream notes_service {
+        server notes-service:8001;
+    }
+
+    server {
+
+        listen 80;
+
+         # Return 429 when rate limit is exceeded
+        limit_req_status 429;
+
+        # Redirect 429 responses to a custom JSON handler
+        error_page 429 = @rate_limit;
+
+        #
+        # AUTH SERVICE
+        #
+
+        location /api/v1/auth {
+
+            limit_req zone=api_limit burst=20 nodelay;
+
+            rewrite ^/api/v1/auth/(.*)$ /api/v1/$1 break;
+            proxy_pass http://auth_service;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+            proxy_set_header Authorization $http_authorization;
+        }
+
+        #
+        # NOTES SERVICE
+        #
+
+        location /api/v1/notes {
+
+            limit_req zone=api_limit burst=20 nodelay;
+
+            proxy_pass http://notes_service;
+
+            proxy_set_header Host $host;
+            proxy_set_header Authorization $http_authorization;
+
+            proxy_set_header X-Real-IP $remote_addr;
+
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+         #
+        # Custom 429 response
+        #
+        location @rate_limit {
+            default_type application/json;
+            return 429 '{"status":"error","message":"Too many requests. Please try again later."}';
+        }
+
+    }
+
+}

@@ -1,0 +1,264 @@
+
+
+services:
+
+  auth:
+    build:
+      context: ./auth-service
+    container_name: auth-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./auth-service:/var/www
+    working_dir: /var/www
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    depends_on:
+      - auth-db
+
+    networks:
+      - microservices  
+
+  notes:
+    build:
+      context: ./notes-service
+    container_name: notes-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./notes-service:/var/www
+    working_dir: /var/www
+    command: php artisan serve --host=0.0.0.0 --port=8001
+    depends_on:
+      - notes-db
+      - rabbitmq
+      - redis
+
+    networks:
+      - microservices  
+
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: auth_app
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+
+    networks:
+      - microservices  
+
+  notes-db:
+    image: mysql:8.0
+    container_name: notes-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: note_app
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+
+    networks:
+      - microservices  
+      
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest  
+    networks:
+      - microservices  
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"   
+    networks:
+      - microservices
+
+  notes-consumer:
+    build:
+      context: ./notes-service
+    container_name: notes-consumer
+    working_dir: /var/www
+    command: php artisan rabbitmq:consume-users
+    depends_on:
+      - rabbitmq
+      - notes-db
+    restart: unless-stopped
+    volumes:
+      - ./notes-service:/var/www
+    networks:
+      - microservices
+
+  notes-consumer-loggedinmsg:
+    build:
+      context: ./notes-service
+    container_name: notes-consumer-loggedinmsg
+    working_dir: /var/www
+    command: php artisan rabbitmq:consume-user-logged-in
+    depends_on:
+      - rabbitmq
+      - notes-db
+    restart: unless-stopped
+    volumes:
+      - ./notes-service:/var/www
+    networks:
+      - microservices      
+
+  notes-worker:
+    build:
+      context: ./notes-service
+    container_name: notes-worker
+    working_dir: /var/www
+    command: php artisan queue:work redis --tries=3 --timeout=90
+    restart: unless-stopped
+    volumes:
+      - ./notes-service:/var/www
+    depends_on:
+      - redis
+      - notes-db
+    networks:
+      - microservices
+
+
+  gateway:
+    build:
+      context: ./gateway
+    container_name: api-gateway
+    ports:
+      - "9000:80"
+    depends_on:
+      - auth
+      - notes
+    networks:
+      - microservices  
+
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+    - microservices
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - microservices
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    container_name: promtail
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - ./auth-service/storage/logs:/var/log/auth
+      - ./notes-service/storage/logs:/var/log/notes
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - microservices  
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - microservices      
+  
+
+#rabbit exporter for metrics
+  rabbitmq-exporter:
+    image: kbudde/rabbitmq-exporter
+    environment:
+      RABBIT_URL: http://rabbitmq:15672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+    ports:
+      - "9419:9419"
+    depends_on:
+      - rabbitmq
+    networks:
+      - microservices
+
+#redis exporter for metrics
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - microservices
+
+
+# CAdvisor for metrics
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    ports:
+      - "8080:8080"
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - microservices
+
+
+#nginx exporter for metrics
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.3.0
+    container_name: nginx-exporter
+    command:
+      - -nginx.scrape-uri=http://api-gateway/nginx_status
+    ports:
+      - "9113:9113"
+    depends_on:
+      - gateway
+    networks:
+      - microservices
+
+
+#Add Jaeger for 
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    networks:
+      - microservices
+
+
+networks:
+  microservices:
+    driver: bridge  
+
+volumes:
+  grafana-data:      

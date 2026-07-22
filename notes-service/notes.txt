@@ -1,0 +1,13 @@
+                 API Gateway
+                      │
+          ┌───────────┴───────────┐
+          ▼                       ▼
+   Auth Service             Notes Service
+          │                       │
+      Auth MySQL             Notes MySQL
+                                  │
+               ┌──────────────────┴──────────────┐
+               ▼                                 ▼
+      RabbitMQ Consumer                 Redis Queue Worker
+               │                                 │
+           RabbitMQ                          Redis

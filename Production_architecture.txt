@@ -1,0 +1,35 @@
+                Internet
+                    │
+                    ▼
+             Nginx Reverse Proxy
+                    │
+      ┌─────────────┴─────────────┐
+      │                           │
+      ▼                           ▼
+ Auth Service (PHP-FPM)     Notes Service (PHP-FPM)
+      │                           │
+      ▼                           ▼
+    MySQL                      MySQL
+
+
+
+Notice:
+
+Nginx receives HTTP requests.
+PHP-FPM executes Laravel.
+Laravel no longer serves HTTP itself.
+
+This is how Laravel Forge, Laravel Cloud, DigitalOcean, AWS, etc., deploy Laravel.
+
+
+local
+                    Client
+                       │
+                       ▼
+                Nginx API Gateway
+                       │
+          ┌────────────┴────────────┐
+          ▼                         ▼
+     Auth Service             Notes Service
+          │                         │
+       MySQL                    MySQL

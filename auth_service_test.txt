@@ -1,0 +1,32 @@
+Unit Tests (Application/Domain)
+Examples:
+
+Login succeeds with valid credentials.
+Login fails with invalid password.
+Login fails when the user doesn't exist.
+Register creates a user.
+Token generation logic.
+
+Feature Tests (Highly recommended)
+
+Laravel's Feature tests simulate real HTTP requests.
+
+Database Tests
+
+Verify that:
+
+user is created
+last_activity is updated
+duplicate emails fail
+
+RabbitMQ Integration Test
+
+After login:
+
+Login endpoint returns 200.
+RabbitMQ receives the event.
+Consumer creates the welcome note.
+
+Redis Tests
+
+After login or caching:
