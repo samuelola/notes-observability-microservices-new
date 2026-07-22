@@ -64,6 +64,9 @@ jobs:
           sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
           sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env  
 
+      - name: Migrate Database
+        run: php artisan migrate --force    
+
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress
 
