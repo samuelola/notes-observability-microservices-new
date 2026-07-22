@@ -9,9 +9,7 @@ uses(RefreshDatabase::class);
 
 it('logs in successfully with valid credentials', function () {
 
-    
     $publisher = Mockery::mock(EventPublisherInterface::class);
-
     $publisher
         ->shouldReceive('publish')
         ->once()
@@ -19,23 +17,19 @@ it('logs in successfully with valid credentials', function () {
             'user.loggedin',
             Mockery::type('array')
         );
-
     $this->app->instance(
         EventPublisherInterface::class,
         $publisher
     );
-
     $user = User::create([
         'name' => 'John Doe',
         'email' => 'john@example.com',
         'password' => Hash::make('password123'),
     ]);
-
     $response = $this->postJson('/api/v1/login', [
         'email' => 'john@example.com',
         'password' => 'password123',
     ]);
-
     $response
         ->assertOk()
         ->assertJson([
@@ -43,6 +37,5 @@ it('logs in successfully with valid credentials', function () {
             'message' => 'Login successful',
         ])
         ->assertJsonPath('user.email', 'john@example.com');
-
     expect($response->json('token'))->not->toBeEmpty();
 });

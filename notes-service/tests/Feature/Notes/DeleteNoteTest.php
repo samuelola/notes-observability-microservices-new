@@ -10,7 +10,6 @@ it('deletes a note successfully', function () {
 
     // Fake authenticated user
     $authClient = Mockery::mock(AuthClientInterface::class);
-
     $authClient->shouldReceive('userFromToken')
         ->once()
         ->andReturn([
@@ -18,19 +17,16 @@ it('deletes a note successfully', function () {
             'name' => 'John Doe',
             'email' => 'john@example.com',
         ]);
-
     $this->app->instance(
         AuthClientInterface::class,
         $authClient
     );
-
     // Create an existing note
     $note = Note::create([
         'title' => 'Shopping List',
         'content' => 'Buy milk',
         'user_id' => 10,
     ]);
-
     // Delete it
     $response = $this->deleteJson(
         "/api/v1/notes/{$note->id}",
@@ -39,7 +35,6 @@ it('deletes a note successfully', function () {
             'Authorization' => 'Bearer fake-token',
         ]
     );
-
     $response
         ->assertOk()
         ->assertJson([
