@@ -17,9 +17,25 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy application
-COPY . .
 
+#
+# Copy composer files FIRST
+# This improves Docker cache significantly
+#
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --no-interaction \
+    --optimize-autoloader
+
+# Copy application
+COPY . .    
+
+RUN php artisan config:cache
+RUN php artisan route:cache
+RUN php artisan view:cache
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
@@ -27,11 +43,6 @@ RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# RUN php artisan config:cache
-# RUN php artisan route:cache
-# RUN php artisan view:cache    
-
-    
-EXPOSE 9000
+EXPOSE 9000    
 
 CMD ["php-fpm"]
