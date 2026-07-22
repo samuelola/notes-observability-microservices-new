@@ -6,8 +6,6 @@ use Modules\Notes\Presentation\Http\Controllers\Api\V1\NoteController;
 // PROTECTED ROUTES
 
 Route::prefix('api/v1')->group(function () {
-    // Route::get('/metrics', [NoteController::class, 'metrics']);
-
     Route::middleware([
         'auth.service',
         'note_inactive_owner',
