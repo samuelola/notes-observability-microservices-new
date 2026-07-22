@@ -1,144 +1,203 @@
-name: CI/CD Pipeline Notes Application
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
 
-jobs:
+##########################################################
+# QUALITY CHECKS
+##########################################################
 
-####################################################
-# QUALITY
-####################################################
+jobs:
 
   quality:
 
+    name: Quality - ${{ matrix.service }}
+
     runs-on: ubuntu-latest
 
-    services:
-
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: auth_testing
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     strategy:
+      fail-fast: false
       matrix:
-        service:
-          - auth-service
-          - notes-service
+        include:
+          - service: auth-service
+            database: auth_testing
+
+          - service: notes-service
+            database: note_testing
 
     defaults:
       run:
         working-directory: ${{ matrix.service }}
 
+    services:
+
+      mysql:
+        image: mysql:8.0
+
+        env:
+          MYSQL_ROOT_PASSWORD: root
+
+        ports:
+          - 3306:3306
+
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
 
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      ##################################################
+      # Checkout
+      ##################################################
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v4
+
+      ##################################################
+      # PHP
+      ##################################################
+
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3
-          extensions: mbstring, pdo_mysql, redis
+          php-version: "8.3"
+          extensions: mbstring,pdo_mysql,redis
           coverage: none
 
-      - name: Copy .env
+      ##################################################
+      # Environment
+      ##################################################
+
+      - name: Copy Environment
         run: cp .env.example .env
 
-      - name: Configure testing DB
-        run: |
-          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
-          sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
-          sed -i 's/DB_DATABASE=.*/DB_DATABASE=auth_testing/' .env
-          sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
-          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env  
-    
+      ##################################################
+      # Composer
+      ##################################################
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: Migrate Database
-        run: php artisan migrate --force  
+      ##################################################
+      # Create Databases
+      ##################################################
+
+      - name: Create Test Database
+        run: |
+          mysql -h127.0.0.1 -uroot -proot \
+          -e "CREATE DATABASE IF NOT EXISTS ${{ matrix.database }};"
+
+      ##################################################
+      # Configure Environment
+      ##################################################
+
+      - name: Configure Database
+        run: |
+
+          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
+          sed -i 's/DB_DATABASE=.*/DB_DATABASE=${{ matrix.database }}/' .env
+          sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
+          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env
+
+      ##################################################
+      # Laravel
+      ##################################################
 
       - name: Generate Application Key
         run: php artisan key:generate
 
-      - name: Clear
-        run: php artisan optimize:clear 
+      - name: Clear Cache
+        run: php artisan optimize:clear
 
-      - name: List routes
-        run: php artisan route:list  
+      - name: Run Migrations
+        run: php artisan migrate --force
 
-      - name: Run Laravel Pint
+      ##################################################
+      # Code Quality
+      ##################################################
+
+      - name: Laravel Pint
         run: vendor/bin/pint --test
 
-      - name: Run Unit Tests
+      ##################################################
+      # Tests
+      ##################################################
+
+      - name: Unit Tests
         run: php artisan test --testsuite=Unit
 
-      - name: Run Feature Tests
+      - name: Feature Tests
         run: php artisan test --testsuite=Feature
 
-      - name: Generate Swagger Documentation
+      ##################################################
+      # Swagger
+      ##################################################
+
+      - name: Generate Swagger
         run: php artisan l5-swagger:generate
 
+##########################################################
+# BUILD & PUSH IMAGES
+##########################################################
 
-####################################################
-# BUILD
-####################################################
-  build-and-push:
-    
+  docker:
+
+    name: Docker - ${{ matrix.image }}
+
     needs: quality
+
     runs-on: ubuntu-latest
 
-    steps:
-      # Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v4
+    strategy:
+      fail-fast: false
 
-      # Log in to Docker Hub
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      matrix:
+        include:
+
+          - image: auth-service
+            context: ./auth-service
+
+          - image: notes-service
+            context: ./notes-service
+
+          - image: gateway
+            context: .
+
+    steps:
+
+      ##################################################
+      # Checkout
+      ##################################################
+
+      - uses: actions/checkout@v4
+
+      ##################################################
+      # Login
+      ##################################################
+
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-####################################################
-# Build and Push Docker AUTH IMAGE
-####################################################
+      ##################################################
+      # Build
+      ##################################################
 
-      # Build Docker image
-
-      - name: Build Docker image
+      - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/auth-service:latest .
+          docker build \
+          -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:latest \
+          ${{ matrix.context }}
 
-      # Push Docker image
-      - name: Push Docker image
+      ##################################################
+      # Push
+      ##################################################
+
+      - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/auth-service:latest
-
-
-####################################################
-# Build and Push Docker NOTES IMAGE
-####################################################
-      # Build Docker image
-
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/notes-service:latest .
-
-      # Push Docker image
-      - name: Push Docker image
-        run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/notes-service:latest
+          docker push \
+          ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:latest

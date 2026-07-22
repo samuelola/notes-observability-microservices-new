@@ -13,6 +13,7 @@ it('creates a note successfully', function () {
        Now your feature test never touches HTTP at all. with the code AuthClientInterface
     */
     $authClient = Mockery::mock(AuthClientInterface::class);
+
     $authClient
         ->shouldReceive('userFromToken')
         ->once()
@@ -25,6 +26,7 @@ it('creates a note successfully', function () {
         AuthClientInterface::class,
         $authClient
     );
+
     $events = Mockery::mock(EventDispatcherInterface::class);
     // mock require expectation
     $events->shouldReceive('dispatch')
@@ -34,6 +36,7 @@ it('creates a note successfully', function () {
         EventDispatcherInterface::class,
         $events
     );
+    
     $response = $this->postJson('/api/v1/notes', [
         'title' => 'Shopping List',
         'content' => 'Buy milk',
