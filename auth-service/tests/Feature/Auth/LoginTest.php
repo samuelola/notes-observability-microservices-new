@@ -2,8 +2,9 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Modules\Auth\Infrastructure\Persistence\Models\User;
 use Modules\Auth\Application\Contracts\EventPublisherInterface;
+use Modules\Auth\Infrastructure\Persistence\Models\User;
+
 
 uses(RefreshDatabase::class);
 
