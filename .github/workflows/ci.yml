@@ -102,6 +102,9 @@ jobs:
           sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
           sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env
 
+          sed -i 's/CACHE_STORE=.*/CACHE_STORE=array/' .env || true
+          sed -i 's/CACHE_DRIVER=.*/CACHE_DRIVER=array/' .env || true
+
       ##################################################
       # Laravel
       ##################################################
