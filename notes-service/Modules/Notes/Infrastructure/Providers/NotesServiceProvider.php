@@ -67,7 +67,7 @@ class NotesServiceProvider extends ServiceProvider
             TraceMiddleware::class
         );
 
-        $route = base_path('Modules/Notes/Presentation/Routes/api.php');
+        $route = base_path('Modules/Notes/Presentation/routes/api.php');
 
         if (file_exists($route)) {
             $this->loadRoutesFrom($route);

@@ -41,7 +41,7 @@ class NewAuthServiceProvider extends ServiceProvider
 
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
-        $route = base_path('Modules/Auth/Presentation/Routes/api.php');
+        $route = base_path('Modules/Auth/Presentation/routes/api.php');
 
         if (file_exists($route)) {
             $this->loadRoutesFrom($route);
