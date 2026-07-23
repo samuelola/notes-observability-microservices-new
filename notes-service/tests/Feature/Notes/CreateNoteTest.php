@@ -36,7 +36,7 @@ it('creates a note successfully', function () {
         EventDispatcherInterface::class,
         $events
     );
-    
+
     $response = $this->postJson('/api/v1/notes', [
         'title' => 'Shopping List',
         'content' => 'Buy milk',

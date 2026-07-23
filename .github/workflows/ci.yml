@@ -95,8 +95,8 @@ jobs:
       # Environment
       ##################################################
 
-      - name: Copy Environment
-        run: cp .env.example .env
+      # - name: Copy Environment
+      #   run: cp .env.testing .env
 
       ##################################################
       # Composer

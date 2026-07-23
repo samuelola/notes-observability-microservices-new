@@ -18,10 +18,10 @@ class OpenTelemetryTracer
     public function __construct()
     {
         if (! env('OTEL_ENABLED', true)) {
-         return;
+            return;
         }
         $transport = (new OtlpHttpTransportFactory)->create(
-            env('OTEL_EXPORTER_OTLP_ENDPOINT','http://jaeger:4318/v1/traces'),
+            env('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://jaeger:4318/v1/traces'),
             'application/x-protobuf'
         );
 
@@ -30,7 +30,6 @@ class OpenTelemetryTracer
                 ResourceAttributes::SERVICE_NAME => 'auth-service',
             ])
         );
-
 
         $exporter = new SpanExporter($transport);
 
@@ -44,8 +43,9 @@ class OpenTelemetryTracer
     public function tracer()
     {
         if ($this->provider === null) {
-            return new NoopTracer();
+            return new NoopTracer;
         }
+
         return $this->provider->getTracer('auth-service');
     }
 
