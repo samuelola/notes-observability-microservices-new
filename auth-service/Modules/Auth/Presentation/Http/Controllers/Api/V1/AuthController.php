@@ -11,11 +11,11 @@ use Modules\Auth\Application\Commands\RegisterCommand;
 use Modules\Auth\Application\DTOs\CreateAuthDTO;
 use Modules\Auth\Application\DTOs\LoginAuthDTO;
 use Modules\Auth\Infrastructure\Tracing\OpenTelemetryTracer;
-use Modules\Auth\Presentation\Http\Controllers\controller;
+use Modules\Auth\Presentation\Http\Controllers\Controller;
 use Modules\Auth\Presentation\Http\Requests\LoginRequest;
 use Modules\Auth\Presentation\Http\Requests\RegisterRequest;
 
-class AuthController extends controller
+class AuthController extends Controller
 {
     // REGISTER
     public function register(RegisterRequest $request, RegisterHandler $handler)
