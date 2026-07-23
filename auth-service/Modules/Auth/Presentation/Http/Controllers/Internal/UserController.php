@@ -3,9 +3,9 @@
 namespace Modules\Auth\Presentation\Http\Controllers\Internal;
 
 use Illuminate\Http\Request;
-use Modules\Auth\Presentation\Http\Controllers\controller;
+use Modules\Auth\Presentation\Http\Controllers\Controller;
 
-class UserController extends controller
+class UserController extends Controller
 {
     public function me(Request $request)
     {
