@@ -206,7 +206,7 @@ jobs:
             context: ./notes-service
 
           - image: gateway
-            context: .
+            context: ./gateway
 
     steps:
 
