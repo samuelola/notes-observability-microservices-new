@@ -26,10 +26,16 @@ class NewAuthServiceProvider extends ServiceProvider
         $this->app->bind(UserServiceInterface::class, UserService::class);
         $this->app->bind(AuthRepositoryInterface::class, AuthRepository::class);
         $this->app->bind(EventPublisherInterface::class, RabbitMQPublisher::class);
-        $this->app->singleton(
-            OpenTelemetryTracer::class,
-            fn () => new OpenTelemetryTracer
-        );
+        // $this->app->singleton(
+        //     OpenTelemetryTracer::class,
+        //     fn () => new OpenTelemetryTracer
+        // );
+
+        if (! app()->environment('testing')) {
+            $this->app->singleton(OpenTelemetryTracer::class, function () {
+                return new OpenTelemetryTracer();
+            });
+        }
 
     }
 

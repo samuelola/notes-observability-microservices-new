@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Infrastructure\Tracing;
 
+use OpenTelemetry\API\Trace\NoopTracer;
 use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
 use OpenTelemetry\Contrib\Otlp\SpanExporter;
 use OpenTelemetry\SDK\Common\Attribute\Attributes;
@@ -12,12 +13,15 @@ use OpenTelemetry\SemConv\ResourceAttributes;
 
 class OpenTelemetryTracer
 {
-    private TracerProvider $provider;
+    private ?TracerProvider $provider = null;
 
     public function __construct()
     {
+        if (! env('OTEL_ENABLED', true)) {
+         return;
+        }
         $transport = (new OtlpHttpTransportFactory)->create(
-            'http://jaeger:4318/v1/traces',
+            env('OTEL_EXPORTER_OTLP_ENDPOINT','http://jaeger:4318/v1/traces'),
             'application/x-protobuf'
         );
 
@@ -26,6 +30,7 @@ class OpenTelemetryTracer
                 ResourceAttributes::SERVICE_NAME => 'auth-service',
             ])
         );
+
 
         $exporter = new SpanExporter($transport);
 
@@ -38,11 +43,16 @@ class OpenTelemetryTracer
 
     public function tracer()
     {
+        if ($this->provider === null) {
+            return new NoopTracer();
+        }
         return $this->provider->getTracer('auth-service');
     }
 
     public function shutdown(): void
     {
-        $this->provider->shutdown();
+        if ($this->provider !== null) {
+            $this->provider->shutdown();
+        }
     }
 }
