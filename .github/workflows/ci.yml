@@ -95,8 +95,8 @@ jobs:
       # Environment
       ##################################################
 
-      # - name: Copy Environment
-      #   run: cp .env.testing .env
+      - name: Copy Environment
+        run: cp .env.testing .env
 
       ##################################################
       # Composer
@@ -137,6 +137,19 @@ jobs:
 
       - name: Laravel Pint
         run: vendor/bin/pint --test
+
+      ##################################################
+      # Debug
+      ##################################################
+
+      - name: Laravel About
+        run: php artisan about
+
+      - name: Route List
+        run: php artisan route:list
+
+      - name: Show environment
+        run: php artisan env   
 
       ##################################################
       # Tests
