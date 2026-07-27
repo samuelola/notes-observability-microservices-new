@@ -76,6 +76,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./auth-service/.env
+    environment:
+      MYSQL_DATABASE: auth_app
+      MYSQL_ROOT_PASSWORD: root  
     volumes:
       - auth-db-data:/var/lib/mysql
     networks:
@@ -87,6 +90,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./notes-service/.env
+    environment:
+      MYSQL_DATABASE: notes_app
+      MYSQL_ROOT_PASSWORD: root    
     volumes:
       - notes-db-data:/var/lib/mysql
     networks:

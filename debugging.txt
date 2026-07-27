@@ -1,0 +1,606 @@
+Debugging is the process of finding, analyzing, and fixing errors (called bugs) in 
+software so that the program works as intended.
+
+A bug is any mistake in the code that causes incorrect behavior, crashes, or unexpected results.
+
+The debugging process
+
+A typical debugging process involves these steps:
+
+Identify the problem
+Observe the error or unexpected behavior.
+Read any error messages.
+Reproduce the bug
+Try to make the bug happen consistently.
+Determine the exact conditions that trigger it.
+Find the cause
+Inspect the relevant code.
+Use debugging tools, logs, or print statements to trace the issue.
+Fix the bug
+Modify the code to eliminate the problem.
+Test the fix
+Verify the bug is resolved.
+Check that the fix hasn't introduced new issues (called regressions).
+
+
+
+Common debugging techniques
+Print debugging: Print variable values to understand what's happening.
+Debugger tools: Use breakpoints, step through code line by line, and inspect variables.
+Logging: Record program events to help diagnose problems.
+Unit testing: Write tests to identify and prevent bugs.
+Code review: Have other developers inspect the code to spot issues.
+
+Debugging vs. Testing
+Debugging	                       Testing
+Finds and fixes bugs	           Checks whether the software works correctly
+Done after a bug is discovered	   Performed to detect bugs before release
+Involves analyzing code	           Involves running test cases
+
+
+Junior engineers debug the code.
+
+Senior engineers debug the system.
+
+The difference isn't intelligence—it's process.
+
+
+The Senior Debugging Loop
+
+Every complex production issue follows roughly this process:
+
+Observe
+
+↓
+
+Reproduce
+
+↓
+
+Reduce
+
+↓
+
+Localize
+
+↓
+
+Hypothesize
+
+↓
+
+Verify
+
+↓
+
+Fix
+
+↓
+
+Prevent
+
+Let's break down each step.
+
+Step 1 — Observe (Gather Facts)
+
+Most engineers immediately jump into the code.
+
+Senior engineers don't.
+
+They ask:
+
+What exactly is broken?
+What still works?
+When did it start?
+Who is affected?
+Can anyone reproduce it?
+What changed recently?
+
+Example:
+
+"Users can't log in."
+
+A junior starts reading authentication code.
+
+A senior asks:
+
+All users?
+Mobile only?
+Web only?
+One region?
+After deployment?
+Only Google login?
+Every request?
+Intermittent?
+
+Those questions often narrow the problem dramatically.
+
+Step 2 — Build a Timeline
+
+Imagine:
+
+09:55 Deploy
+
+↓
+
+10:02 Error rate increases
+
+↓
+
+10:05 Customer complaints
+
+↓
+
+10:08 Rollback
+
+↓
+
+10:10 Errors stop
+
+That timeline tells a story.
+
+Always ask:
+
+What changed before the issue appeared?
+
+Look for:
+
+Deployments
+Feature flags
+Config changes
+Database migrations
+Certificate renewals
+Expired tokens
+Infrastructure changes
+Traffic spikes
+Step 3 — Reproduce the Bug
+
+If you can't reproduce it, you're guessing.
+
+Senior engineers try to reproduce it with the smallest possible example.
+
+Instead of:
+
+Entire application
+
+Reduce it to:
+
+API endpoint
+
+↓
+
+Single request
+
+↓
+
+Specific payload
+
+↓
+
+One user
+
+↓
+
+One database row
+
+The smaller the reproduction, the easier the fix.
+
+Step 4 — Reduce the Search Space
+
+Imagine the system:
+
+Browser
+
+↓
+
+Load Balancer
+
+↓
+
+API Gateway
+
+↓
+
+Service A
+
+↓
+
+Redis
+
+↓
+
+Database
+
+Where is the failure?
+
+Don't inspect everything.
+
+Eliminate components.
+
+Ask:
+
+Does the request reach the API?
+
+Yes.
+
+Then frontend isn't the problem.
+
+Does the API call Redis?
+
+Yes.
+
+Does Redis respond?
+
+No.
+
+Now you've reduced six components to one.
+
+Step 5 — Follow the Data
+
+Trace one request.
+
+Request
+
+↓
+
+Validation
+
+↓
+
+Authentication
+
+↓
+
+Business Logic
+
+↓
+
+Repository
+
+↓
+
+Database
+
+↓
+
+Cache
+
+↓
+
+Response
+
+At every step ask:
+
+What is the value right now?
+
+Example:
+
+email
+
+↓
+
+validated
+
+↓
+
+trimmed
+
+↓
+
+lowercase
+
+↓
+
+database lookup
+
+Maybe the bug isn't the database.
+
+Maybe " Alice@example.com " became "alice@example.com" incorrectly—or not at all.
+
+Step 6 — Form Hypotheses
+
+Don't randomly change code.
+
+Write hypotheses.
+
+Example:
+
+Hypothesis 1:
+
+Cache returns stale data.
+
+Test.
+
+Wrong.
+
+Hypothesis 2:
+
+Migration removed a column.
+
+Test.
+
+Wrong.
+
+Hypothesis 3:
+
+JWT expiration is incorrect.
+
+Test.
+
+Correct.
+
+Senior engineers are constantly asking:
+
+"What evidence would prove me wrong?"
+
+Step 7 — Instrument the System
+
+If you can't see it, add visibility.
+
+Useful tools include:
+
+Logs
+Metrics
+Traces
+Debug output
+Database query logs
+Request IDs
+Correlation IDs
+
+Suppose you have:
+
+Frontend
+
+↓
+
+Gateway
+
+↓
+
+Auth
+
+↓
+
+Orders
+
+↓
+
+Payments
+
+A request ID lets you trace the same request through every service.
+
+Without it, you're searching blindly.
+
+Step 8 — Divide and Conquer
+
+This is one of the most valuable debugging techniques.
+
+Suppose there are 100 functions.
+
+Don't inspect all 100.
+
+Split the problem:
+
+First 50
+
+↓
+
+Works
+
+↓
+
+Last 50
+
+↓
+
+Broken
+
+Split again:
+
+25
+
+↓
+
+Broken
+
+Split again.
+
+Keep halving until you isolate the issue.
+
+The same idea applies to:
+
+Services
+Components
+Deployments
+Configuration
+Git commits
+
+This is essentially binary search applied to debugging.
+
+Step 9 — Think in Failure Modes
+
+For every dependency ask:
+
+What if this fails?
+
+Database:
+
+Timeout
+Connection pool exhausted
+Deadlock
+Slow query
+
+Redis:
+
+Eviction
+Expired key
+Wrong serialization
+
+API:
+
+500
+429
+Invalid JSON
+Timeout
+
+File System:
+
+Full disk
+Missing file
+Permission denied
+
+Good debuggers think about how systems fail, not just how they work.
+
+Step 10 — Verify the Fix
+
+Don't stop when the symptom disappears.
+
+Ask:
+
+Why did this fix work?
+
+Could it fail again?
+
+What else might this affect?
+
+Can I write a test to prevent regression?
+
+The Mental Models of Senior Debuggers
+1. Eliminate, Don't Guess
+
+Bad:
+
+"I think Redis is broken."
+
+Good:
+
+"I confirmed Redis responds correctly, so I can eliminate it."
+
+Every eliminated possibility makes the search easier.
+
+2. Every Symptom Has a Cause
+
+Example:
+
+500 Error
+
+That's a symptom.
+
+Keep asking:
+
+Why?
+
+Eventually you reach the root cause.
+
+Example:
+
+500
+
+↓
+
+Null pointer
+
+↓
+
+Missing user
+
+↓
+
+Cache stale
+
+↓
+
+Cache invalidation bug
+
+Fixing only the null pointer leaves the real bug in place.
+
+3. Correlation Isn't Causation
+
+Deployment happened.
+
+Bug happened.
+
+That doesn't prove the deployment caused it.
+
+Look for evidence.
+
+4. The Last Change Is Suspicious
+
+Most production bugs come from:
+
+Recent deploys
+Configuration changes
+Infrastructure updates
+Dependency upgrades
+Feature flags
+Database migrations
+
+Start there—but verify before concluding.
+
+5. Read Errors Carefully
+
+Many engineers skim error messages.
+
+Senior engineers read them word by word.
+
+Example:
+
+Cannot read property "name"
+
+of undefined
+
+at UserService.ts line 118
+
+This already tells you:
+
+File
+Line
+Object
+Property
+
+That's valuable information.
+
+Debugging Checklist
+
+When you're stuck, work through these questions:
+
+What is the exact symptom?
+Can I reproduce it?
+What changed recently?
+Which components are definitely working?
+Which component is the first one behaving incorrectly?
+What assumptions am I making?
+What evidence supports my current hypothesis?
+What evidence would disprove it?
+Have I found the root cause or just treated a symptom?
+How can we prevent this from happening again?
+How Senior Engineers Practice
+
+They don't wait for production incidents. They train their debugging instincts.
+
+A few exercises that work well:
+
+Read postmortems. Study real incidents from engineering organizations. 
+Focus on the timeline, root cause, and preventive actions.
+Debug intentionally broken code. Take a project, introduce a subtle bug, 
+and practice finding it without immediately looking at the answer.
+Trace requests end-to-end. Follow a single request through logs, services, 
+databases, and caches until you understand every step.
+Review incident reports. After fixing a bug, write a short report describing the symptoms, 
+root cause, impact, fix, and lessons learned.
+The Skill That Separates Staff Engineers
+
+The best engineers don't ask:
+
+"Where is the bug?"
+
+They ask:
+
+"What observations would make the bug inevitable?"
+
+That mindset changes debugging from trial-and-error into an investigation. 
+Every log, metric, and experiment is designed to reduce uncertainty until only one explanation remains.
+
+If you can consistently approach problems that way, you'll find yourself 
+solving issues that seem "impossible" to everyone else—not because you know more APIs, 
+but because you know how to reason through complex systems.

@@ -1,0 +1,583 @@
+Technical planning is the process of deciding how a software system or feature will be designed, built, tested, and deployed before development begins. It involves identifying the technical approach, resources, tools, timeline, and potential risks to ensure the project is completed successfully.
+
+Why technical planning is important
+
+Technical planning helps teams:
+
+Define a clear development approach.
+Reduce technical risks and uncertainties.
+Estimate the time and resources required.
+Ensure everyone understands the project goals.
+Improve software quality and maintainability.
+What is included in technical planning?
+
+A technical plan typically covers:
+
+Requirements analysis: Understand what the software needs to do.
+System architecture: Decide how the system will be structured.
+Technology stack: Choose programming languages, frameworks, databases, and tools.
+Task breakdown: Divide the project into smaller, manageable tasks.
+Timeline and milestones: Estimate when tasks should be completed.
+Risk assessment: Identify potential technical challenges and plan how to address them.
+Testing strategy: Plan how the software will be tested.
+Deployment plan: Decide how the software will be released and maintained.
+
+Benefits of technical planning
+Reduces development delays.
+Helps prevent costly design mistakes.
+Improves collaboration among team members.
+Makes project progress easier to track.
+Ensures the software is scalable and maintainable.
+Technical planning vs. Project planning
+Technical Planning	Project Planning
+Focuses on how the software will be built	Focuses on when, who, and budget
+Covers architecture, tools, coding approach, testing, and deployment	Covers schedule, resources, costs, and project management
+Usually led by technical leads or software architects	Usually led by project managers or product managers
+
+
+
+What Technical Planning Actually Is
+
+Imagine your PM says:
+
+We want users to upload videos.
+
+A junior thinks:
+
+I'll use S3.
+
+A senior thinks:
+
+Upload
+
+↓
+
+Process
+
+↓
+
+Store
+
+↓
+
+Serve
+
+A Staff Engineer thinks:
+
+How many uploads/day?
+Average size?
+Maximum size?
+Global users?
+Cost?
+Security?
+Future features?
+Compliance?
+Rollback strategy?
+
+Notice they haven't written code yet.
+
+The Planning Pyramid
+
+Always think in this order.
+
+Business Goal
+
+↓
+
+Requirements
+
+↓
+
+Constraints
+
+↓
+
+Architecture
+
+↓
+
+Implementation
+
+↓
+
+Deployment
+
+↓
+
+Operations
+
+Many engineers start at Implementation.
+
+That's backwards.
+
+Step 1 — Understand the Business
+
+Never plan technology first.
+
+Ask
+
+Why are we building this?
+
+Example
+
+Feature:
+
+Notifications
+
+Question
+
+Why?
+
+Answer:
+
+Increase user engagement.
+
+Now ask
+
+Do we need
+
+Email?
+Push?
+SMS?
+In-app?
+
+Maybe only email achieves the goal.
+
+Planning starts with understanding outcomes, not technology.
+
+Step 2 — Gather Requirements
+
+Separate functional from non-functional requirements.
+
+Functional:
+
+User uploads file
+User downloads file
+Delete file
+
+Non-functional:
+
+99.9% uptime
+Upload 5 GB files
+Encrypt data
+Less than 200 ms latency
+
+Many failed projects meet the functional requirements but ignore the non-functional ones.
+
+Step 3 — Find Constraints
+
+Everything has constraints.
+
+Examples:
+
+Budget
+
+Must stay under $2,000/month.
+
+Time
+
+Launch in four weeks.
+
+Traffic
+
+10 million users.
+
+Compliance
+
+Must meet GDPR requirements.
+
+Team
+
+Two engineers available.
+
+Constraints shape your solution more than technology choices do.
+
+Step 4 — Break the Problem Down
+
+Don't think:
+
+Build video platform.
+
+Think:
+
+Upload
+
+↓
+
+Validation
+
+↓
+
+Storage
+
+↓
+
+Processing
+
+↓
+
+Metadata
+
+↓
+
+Streaming
+
+↓
+
+Monitoring
+
+Each piece can now be planned independently.
+
+Step 5 — Identify Risks
+
+Every project has risks.
+
+Create a table like this:
+
+Risk	Likelihood	Impact	Mitigation
+Storage costs grow too quickly	Medium	High	Compress videos, archive old content
+Slow transcoding	Medium	Medium	Queue jobs, autoscale workers
+Malware uploads	Low	High	Scan uploads before processing
+Vendor outage	Low	High	Retries, backups, graceful degradation
+
+Experienced planners spend significant time identifying risks early.
+
+Step 6 — Evaluate Tradeoffs
+
+This is where senior thinking becomes visible.
+
+Suppose you need search.
+
+Option A
+
+Database LIKE query
+
+Pros
+
+Easy
+Fast to build
+
+Cons
+
+Doesn't scale well
+
+Option B
+
+Elasticsearch
+
+Pros
+
+Powerful
+Scalable
+
+Cons
+
+Operational complexity
+
+A Staff Engineer doesn't ask:
+
+Which is best?
+
+They ask:
+
+Which is best for our current needs?
+
+Overengineering is as harmful as underengineering.
+
+Step 7 — Think About Evolution
+
+Imagine today
+
+100 users
+
+Next year
+
+5 million users
+
+Ask:
+
+What changes?
+
+Database?
+
+Caching?
+
+Queues?
+
+Storage?
+
+Indexes?
+
+API?
+
+You don't need to build for 5 million users today, but you should avoid choices that make growth unnecessarily difficult.
+
+Step 8 — Plan Incrementally
+
+Bad plan
+
+Spend six months building everything.
+
+↓
+
+Release once.
+
+Better
+
+Phase 1
+
+↓
+
+Internal testing
+
+↓
+
+Beta users
+
+↓
+
+10%
+
+↓
+
+50%
+
+↓
+
+100%
+
+Smaller releases reduce risk and generate feedback sooner.
+
+Step 9 — Deployment Strategy
+
+Ask
+
+Can this deploy safely?
+
+Example
+
+Database migration
+
+Old application
+
+↓
+
+New application
+
+↓
+
+Migration
+
+↓
+
+Cleanup
+
+Not
+
+Migration
+
+↓
+
+Application crashes
+
+Plan for compatibility between old and new versions whenever possible.
+
+Step 10 — Operational Planning
+
+Once deployed, ask:
+
+How will we know it's healthy?
+
+Plan for:
+
+Logs
+
+Metrics
+
+Alerts
+
+Tracing
+
+Dashboards
+
+Runbooks
+
+Backups
+
+Recovery
+
+Engineers often spend more time operating systems than building them.
+
+Think in Decisions
+
+Every plan is a sequence of decisions.
+
+For each one, document:
+
+Decision
+
+Use PostgreSQL.
+
+Why
+
+Strong transactional guarantees and team expertise.
+
+Alternatives
+
+MySQL, DynamoDB.
+
+Tradeoffs
+
+Slightly harder horizontal scaling, but simpler consistency model.
+
+This makes your reasoning transparent.
+
+Ask These Questions for Every Project
+Users
+
+Who uses it?
+
+How many?
+
+How often?
+
+What's the worst thing that could happen to them?
+
+Data
+
+Where does it come from?
+
+Where is it stored?
+
+Who owns it?
+
+Can it be lost?
+
+How long is it retained?
+
+Failure
+
+What happens if:
+
+Database fails?
+
+Queue fails?
+
+Cache fails?
+
+Third-party API fails?
+
+Network fails?
+
+Region fails?
+
+Design graceful degradation where possible.
+
+Scale
+
+What happens at
+
+10 users?
+
+1,000?
+
+100,000?
+
+10 million?
+
+Look for bottlenecks that appear as usage grows.
+
+Security
+
+Who can access this?
+
+Who should not?
+
+Can someone modify another user's data?
+
+What sensitive information is handled?
+
+Maintenance
+
+Imagine a new engineer joins in a year.
+
+Can they understand the design from your documentation?
+
+Can they safely make changes?
+
+Good planning considers the next engineer as much as the current one.
+
+Planning Documents Used by Senior Engineers
+
+A common design document includes:
+
+Problem Statement
+Goals
+Non-goals
+Requirements
+Constraints
+Proposed Architecture
+Alternatives Considered
+Tradeoffs
+Risks
+Rollout Plan
+Monitoring and Operations
+Rollback Plan
+Open Questions
+
+This structure helps reviewers understand not just what you're proposing, but why.
+
+The Mental Models of Staff Engineers
+
+Instead of asking:
+
+Can we build this?
+
+They ask:
+
+Should we build this?
+What assumptions are we making?
+What's the cheapest solution that meets today's requirements?
+What decision would be hard to reverse later?
+If this fails at 2 a.m., who gets paged and what will they do?
+What is the blast radius if this change goes wrong?
+What technical debt are we creating, and is it acceptable?
+Deliberate Practice
+
+To develop this skill, don't wait until you're assigned a design document. Practice proactively.
+
+Take a feature from a product you know—for example:
+
+"Users can schedule emails."
+"Add dark mode."
+"Support file uploads."
+"Add two-factor authentication."
+
+Before writing any code, produce a one-page technical plan covering:
+
+The business goal
+Requirements
+Constraints
+Proposed architecture
+Alternatives
+Risks
+Rollout plan
+Monitoring
+Rollback strategy
+
+Then ask yourself: Could another engineer build this from my plan without repeatedly asking me for clarification?
+
+If the answer is yes, you're developing one of the core skills expected of senior and staff engineers.
+
+A progression to Staff-level planning
+
+A practical path looks like this:
+
+Weeks 1–2: Learn to gather complete requirements and identify hidden assumptions.
+Weeks 3–4: Practice decomposing features into components and identifying risks.
+Weeks 5–6: Compare multiple architectural approaches and justify tradeoffs.
+Weeks 7–8: Add rollout, observability, rollback, and operational planning.
+Weeks 9–10: Present your design to others, invite criticism, and revise it based on feedback.
+
+One of the best ways to learn is through repetition. 
+Give yourself a real feature, write a design document, and have someone challenge every assumption. Over time, you'll stop thinking in terms of code and start thinking in terms of systems, risk, and long-term engineering decisions—the hallmark of a senior technical planner.

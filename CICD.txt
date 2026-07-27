@@ -73,3 +73,27 @@ Deploy to VPS
 
 Stage 8
 Health Check
+
+
+True Continuous Deployment (CD)
+
+A fully automated pipeline looks like this:
+
+Push
+   │
+   ▼
+GitHub Actions
+   │
+   ├── Tests
+   ├── Build
+   ├── Push to Docker Hub
+   │
+   ▼
+SSH into EC2
+   │
+   ├── docker compose pull
+   ├── docker compose up -d
+   └── docker image prune -f
+
+
+   Now everything is automatic.

@@ -1,0 +1,1138 @@
+Code Review
+
+A code review is the process of having one or more developers examine 
+someone else's code before it is merged into the main codebase.
+The goal is to improve code quality, catch bugs, ensure consistency, 
+and share knowledge across the team.
+
+Code review is a quality assurance practice where developers inspect each other's code 
+to identify defects, improve design, maintain coding standards, 
+and ensure the code is ready to be merged into the project.
+
+
+Why code reviews are important
+
+Code reviews help teams:
+
+Find bugs early before they reach production.
+Improve code quality by suggesting cleaner, simpler, or more efficient solutions.
+Maintain coding standards so the codebase stays consistent.
+Share knowledge by exposing team members to different parts of the codebase.
+Reduce technical debt by preventing poor design decisions from accumulating.
+
+
+How a typical code review works
+A developer writes code for a feature or bug fix.
+They create a pull request (PR) or merge request (MR).
+One or more teammates review the changes.
+Reviewers leave comments, ask questions, or suggest improvements.
+The author updates the code if needed.
+Once approved, the code is merged into the main branch.
+
+What reviewers look for
+
+A reviewer typically checks:
+
+Correctness: Does the code solve the problem?
+Readability: Is it easy to understand?
+Maintainability: Will it be easy to modify later?
+Performance: Are there unnecessary slow operations?
+Security: Could the code introduce vulnerabilities?
+Testing: Are there adequate tests for the changes?
+Style: Does it follow the team's coding conventions?
+
+
+Best practices for code reviews
+
+For authors:
+
+Keep pull requests small and focused.
+Write clear descriptions explaining the changes.
+Respond respectfully to feedback.
+Add or update tests when necessary.
+
+
+For reviewers:
+
+Be constructive and respectful.
+Explain why a change is recommended.
+Focus on important issues rather than personal preferences.
+Acknowledge good code as well as areas for improvement.
+
+Common tools
+
+Teams commonly perform code reviews using:
+
+GitHub Pull Requests
+GitLab Merge Requests
+Bitbucket Pull Requests
+Azure DevOps Repos
+Gerrit
+
+
+Layer 1 — Does it solve the problem?
+
+Ask:
+
+Does this actually implement the requirement?
+What user problem does it solve?
+Did they misunderstand the ticket?
+
+Example:
+
+Ticket:
+
+Users can reset passwords.
+
+PR:
+
+POST /reset-password
+
+Looks good.
+
+But...
+
+It never sends the email.
+
+Implementation is technically correct.
+
+Business requirement isn't.
+
+Layer 2 — Architecture
+
+This is where middle engineers often struggle.
+
+Ask:
+
+Where does this logic belong?
+
+Example
+
+Bad
+
+UserController
+
+validate password
+
+encrypt password
+
+send email
+
+save database
+
+create JWT
+
+log analytics
+
+Everything inside controller.
+
+Better
+
+Controller
+
+↓
+
+Service
+
+↓
+
+Repository
+
+↓
+
+Database
+
+The reviewer notices responsibilities.
+
+Not syntax.
+
+Layer 3 — Correctness
+
+This is the biggest one.
+
+Pretend you're trying to break it.
+
+Ask:
+
+What happens if:
+
+input is empty?
+user doesn't exist?
+network fails?
+timeout?
+duplicate request?
+race condition?
+null?
+undefined?
+negative values?
+permissions?
+
+Example
+
+cart.total += item.price
+
+Question:
+
+What if quantity is zero?
+
+Negative?
+
+Decimal?
+
+Overflow?
+
+Discount?
+
+Tax?
+
+Reviewers think about reality.
+
+Layer 4 — Maintainability
+
+Imagine another engineer touches this code in 12 months.
+
+Ask:
+
+Would they understand this quickly?
+
+Look for
+
+Huge functions
+
+function processOrder(){
+
+400 lines
+
+}
+
+Magic numbers
+
+if(score > 73)
+
+What is 73?
+
+Duplicate logic
+
+calculateTax()
+
+implemented three times.
+
+Hardcoded strings
+
+"approved"
+
+"completed"
+
+"done"
+
+Inconsistent.
+
+Layer 5 — Readability
+
+Review names.
+
+Good
+
+calculateMonthlyRevenue()
+
+Bad
+
+calc()
+
+run()
+
+process()
+
+thing()
+
+helper()
+
+manager()
+
+
+Names should explain intent.
+
+Layer 6 — Tests
+
+A review isn't complete without asking:
+
+How do we know this works?
+
+Look for
+
+Happy path
+
+Edge cases
+
+Failure cases
+
+Regression cases
+
+Example
+
+Testing only
+
+login succeeds
+
+Missing
+
+wrong password
+
+locked account
+
+expired account
+
+disabled account
+
+server failure
+Layer 7 — Performance
+
+Only after correctness.
+
+Questions:
+
+Does this:
+
+loop unnecessarily?
+query database repeatedly?
+fetch too much data?
+allocate huge objects?
+create N+1 queries?
+
+Example
+
+for(user of users){
+
+await db.findOrders(user.id)
+
+}
+
+Reviewer immediately sees N+1.
+
+Layer 8 — Security
+
+Always think:
+
+Can this be abused?
+
+Checklist
+
+Authentication
+
+Authorization
+
+SQL Injection
+
+XSS
+
+Secrets
+
+Rate limiting
+
+Input validation
+
+File upload
+
+Permissions
+
+Logging sensitive data
+
+Layer 9 — API Design
+
+If reviewing backend:
+
+Are names consistent?
+
+GET /users
+
+GET /users/{id}
+
+POST /users
+
+Not
+
+GET /fetchUsers
+
+POST /createUser
+
+DELETE /removeUser
+
+Consistency matters.
+
+Layer 10 — Developer Experience
+
+Ask:
+
+Would another engineer enjoy using this API?
+
+Example
+
+Instead of
+
+createUser(name, email, phone, role, city, country)
+
+Prefer
+
+createUser({
+    name,
+    email,
+    phone,
+    role,
+    city,
+    country
+})
+
+
+Learn to Spot Code Smells
+
+Here are common ones you'll begin to recognize with practice.
+
+Smell	                Why it's a problem
+Giant functions	        Too many responsibilities
+Deep nesting	        Hard to follow
+Repeated code	        Bug fixes must be duplicated
+Magic numbers	        Meaning is unclear
+Long parameter lists	Hard to use correctly
+Boolean flags	        Often indicate multiple responsibilities
+Global state	        Difficult to reason about
+Side effects	        Unexpected behavior
+Hidden dependencies	    Hard to test
+Inconsistent naming	    Increases cognitive load
+
+
+
+Learn to Ask Better Questions
+
+Instead of
+
+This is wrong.
+
+Say
+
+What happens if the user submits this request twice?
+
+Instead of
+
+Refactor this.
+
+Say
+
+Could we extract this validation into a reusable helper so it's shared with the update flow?
+
+Instead of
+
+Bad naming.
+
+Say
+
+Would calculateInvoiceTotal communicate the intent more clearly than processInvoice?
+
+Great reviewers coach rather than dictate.
+
+
+
+Prioritize Your Feedback
+
+A useful framework is:
+
+Blocker – Must be fixed before merging (bugs, security issues, broken logic, data corruption).
+Major – Strongly recommended before merging (maintainability, missing tests, architectural issues).
+Minor – Can be addressed later (small refactors, naming improvements, formatting).
+Nit – Purely stylistic suggestions that don't affect correctness.
+
+This helps authors understand what truly matters.
+
+
+Build a Review Checklist
+
+Over time, you'll internalize these questions:
+
+Does it solve the requirement?
+Is the design appropriate?
+Is it correct?
+Are edge cases handled?
+Is it secure?
+Is it performant enough?
+Is it maintainable?
+Is it readable?
+Are tests sufficient?
+Is the change scoped appropriately?
+
+A checklist keeps reviews consistent and prevents you from focusing only on style.
+
+
+A 10-Week Learning Plan
+
+Weeks 1–2: Focus on correctness and business logic. Ignore formatting almost entirely.
+
+Weeks 3–4: Learn to identify maintainability problems, code smells, and responsibility boundaries.
+
+Weeks 5–6: Study testing. For every change, think about the happy path, edge cases, and failure cases.
+
+Weeks 7–8: Learn performance fundamentals (database access patterns, algorithms, memory usage) 
+and common security pitfalls.
+
+Weeks 9–10: Practice writing high-quality review comments that are clear, 
+actionable, and respectful. Aim to explain why a change is needed, not just what to change.
+
+
+Reviewing like a Staff Engineer
+
+This is the level where code review stops being about 
+code and starts being about engineering decisions.
+
+I'll teach you how many senior engineers at companies like Stripe, Google, 
+Meta, Amazon, and Microsoft think during reviews. The exact process differs by company,
+but the mental models are remarkably similar.
+
+The Staff Engineer Review Pyramid
+Think in this order.
+   Business Risk
+        ↓
+  System Design
+        ↓
+  Data Integrity
+        ↓
+    Security
+        ↓
+   Reliability
+        ↓
+   Scalability
+        ↓
+   Observability
+        ↓
+   Performance
+        ↓
+  Maintainability
+        ↓
+  Readability
+        ↓
+      Style
+
+
+
+
+Level 1: Understand the Change Before Reading Code
+
+Never start by reading code.
+
+First ask:
+
+Why does this PR exist?
+
+You should understand:
+
+the ticket
+business goal
+customer impact
+constraints
+tradeoffs
+
+Example
+
+Ticket:
+
+Add coupon support.
+
+Wrong review:
+
+Looks clean.
+
+Good review:
+
+Does this support multiple coupons in the future?
+
+Or is business certain it will always be one?
+
+One question can save weeks of refactoring later.
+
+Level 2: Review the Architecture
+
+Don't read lines.
+
+Draw boxes.
+
+Example PR
+
+Controller
+
+↓
+
+Service
+
+↓
+
+Repository
+
+↓
+
+Database
+
+Ask:
+
+Is every responsibility in the right layer?
+Is business logic leaking?
+Is persistence leaking?
+Is transport leaking?
+
+Example
+
+Bad
+
+Repository
+
+↓
+
+calculateDiscount()
+
+↓
+
+save()
+
+Repositories shouldn't know business rules.
+
+Level 3: Think About Future Change
+
+Staff engineers review for tomorrow.
+
+Ask
+
+"If requirements double, what breaks?"
+
+Example
+
+Current
+
+if(plan=="premium")
+
+Question
+
+What happens when there are:
+
+Premium
+
+Enterprise
+
+Student
+
+Government
+
+Internal
+
+Partner
+
+Simple code today.
+
+Nightmare tomorrow.
+
+Level 4: Hunt Assumptions
+
+Every bug begins as an assumption.
+
+Example
+
+user.address.city
+
+Reviewer asks
+
+Can address be null?
+
+Can city be missing?
+
+Can user be deleted?
+
+Can cached data be stale?
+
+Never trust assumptions.
+
+Level 5: Review Data Flow
+
+This is huge.
+
+Track the data.
+
+Request
+
+↓
+
+Validation
+
+↓
+
+Service
+
+↓
+
+Database
+
+↓
+
+Cache
+
+↓
+
+Response
+
+At every arrow ask
+
+Can data become invalid?
+
+Example
+
+POST
+
+↓
+
+validate
+
+↓
+
+save
+
+↓
+
+cache
+
+↓
+
+respond
+
+What if cache update fails?
+
+Database says yes.
+
+Cache says no.
+
+Now users see stale data.
+
+Level 6: Review State Changes
+
+The hardest bugs involve state.
+
+Example
+
+balance
+
+↓
+
+withdraw
+
+↓
+
+save
+
+Question
+
+What if two requests happen simultaneously?
+
+100
+
+↓
+
+withdraw 80
+
+↓
+
+20
+
+Second request
+
+100
+
+↓
+
+withdraw 80
+
+↓
+
+20
+
+Final balance
+
+Should be
+
+-60
+
+Actually
+
+20
+
+Classic race condition.
+
+Staff reviewers always ask
+
+"Can this happen concurrently?"
+
+Level 7: Think About Failure
+
+Never assume success.
+
+Ask
+
+What happens if
+
+Redis dies?
+Kafka unavailable?
+Database timeout?
+API returns 500?
+DNS failure?
+Disk full?
+Queue delayed?
+User retries?
+
+Production is mostly failure handling.
+
+Level 8: Idempotency
+
+One of the most overlooked concepts.
+
+Imagine
+
+Charge credit card
+
+Network disconnects.
+
+User retries.
+
+Did we charge once?
+
+Or twice?
+
+Every POST should make you think
+
+Can this request safely happen twice?
+Level 9: Eventual Consistency
+
+Example
+
+Update order
+
+↓
+
+Publish event
+
+↓
+
+Inventory updates later
+
+Question
+
+What if publishing fails?
+
+Database changed.
+
+Inventory didn't.
+
+Staff reviewers notice distributed problems.
+
+Level 10: Transactions
+
+Whenever multiple writes exist
+
+save order
+
+save payment
+
+save invoice
+
+send email
+
+Ask
+
+Should these all succeed together?
+
+What if invoice fails?
+
+Should payment roll back?
+
+Level 11: API Review
+
+Good APIs survive years.
+
+Bad APIs survive forever.
+
+Review
+
+Names
+
+createOrder()
+
+vs
+
+submitOrder()
+
+These are different.
+
+Create
+
+may mean draft.
+
+Submit
+
+may mean final.
+
+Words matter.
+
+Level 12: Dependency Review
+
+Every dependency costs.
+
+Ask
+
+Do we need this library?
+
+Example
+
+Importing
+
+lodash
+
+to use
+
+capitalize()
+
+Not worth it.
+
+Level 13: Database Review
+
+Always inspect queries.
+
+Example
+
+SELECT *
+
+FROM users
+
+Question
+
+Do we need all columns?
+
+Example
+
+for user
+
+query orders
+
+N+1.
+
+Example
+
+Missing index.
+
+Example
+
+Sorting without index.
+
+Database reviewers think in execution plans.
+
+Level 14: Caching Review
+
+Ask
+
+When does cache expire?
+
+Who invalidates?
+
+Can stale data hurt?
+
+Can cache poison happen?
+
+Most cache bugs are invalidation bugs.
+
+Level 15: Security Review
+
+Don't stop at SQL injection.
+
+Think
+
+Authentication
+
+Authorization
+
+Secrets
+
+Logging
+
+Encryption
+
+Rate limiting
+
+Replay attacks
+
+Session fixation
+
+CSRF
+
+XSS
+
+SSRF
+
+Mass assignment
+
+Broken object authorization
+
+Example
+
+PUT
+
+/users/15
+
+Question
+
+Can user 16 update it?
+
+Level 16: Observability
+
+Can we debug this later?
+
+Ask
+
+Do we log enough?
+
+Too much?
+
+Metrics?
+
+Tracing?
+
+Correlation ID?
+
+Audit trail?
+
+Imagine waking at 3 AM.
+
+Can you diagnose the issue?
+
+Level 17: Operational Review
+
+Suppose deployment fails halfway.
+
+What happens?
+
+Example
+
+Migration
+
+remove column
+
+Old servers still use it.
+
+Boom.
+
+Staff reviewers love backwards compatibility.
+
+Level 18: Deployment Safety
+
+Ask
+
+Can this deploy gradually?
+
+Feature flag?
+
+Dark launch?
+
+Rollback safe?
+
+Canary?
+
+Blue-green?
+
+Large companies optimize for safe deployments, not just correct code.
+
+Level 19: Readability
+
+Now you read the code.
+
+By now you've already caught most real issues.
+
+Look for
+
+Large methods
+
+Magic values
+
+Hidden mutations
+
+Complex conditions
+
+Nested loops
+
+Ambiguous names
+
+Dead code
+
+Level 20: Style
+
+Finally
+
+Spacing
+
+Formatting
+
+Imports
+
+Quotes
+
+Line length
+
+Semicolons
+
+This is the easiest part to automate with linters and formatters.
+
+The Mental Models of Great Reviewers
+
+These are the questions that experienced reviewers instinctively ask.
+
+Invariants
+
+What must always be true?
+
+Example:
+
+An order cannot be both "Cancelled" and "Paid."
+
+Does this change preserve that rule?
+
+Preconditions
+
+What must be true before this code runs?
+
+User must exist.
+
+Is that guaranteed, or just assumed?
+
+Postconditions
+
+What should be true after this function finishes?
+
+Inventory count must never be negative.
+
+Can this function violate that?
+
+Failure Domains
+
+If this component fails, what else breaks?
+
+A logging failure should not prevent a user from checking out. A payment service failure probably should.
+
+Blast Radius
+
+If this code is wrong, how many users are affected?
+
+A typo in an internal admin page has a small blast radius. A bug in authentication or payments has a huge one.
+
+Coupling
+
+How many other components must change if this code changes?
+
+High coupling is a warning sign. Favor designs where changes stay localized.
+
+Cohesion
+
+Does this module have one clear responsibility?
+
+If a class validates input, sends emails, updates the database, and formats reports, it's trying to do too much.
+
+Complexity Budget
+
+Every new abstraction has a cost. Ask whether it genuinely simplifies the system or just moves complexity elsewhere.

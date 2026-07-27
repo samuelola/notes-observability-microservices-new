@@ -141,3 +141,32 @@ SSH_USER
 
 SSH_PRIVATE_KEY
 
+
+Since you've already:
+
+✅ Built the microservices
+✅ Containerized them with Docker
+✅ Set up Docker Hub images
+✅ Created a CI/CD pipeline
+✅ Chosen AWS
+
+the next phase is deployment.
+
+
+                Postman / Browser
+                        │
+                        ▼
+            http://EC2_PUBLIC_IP
+                        │
+                  Gateway (Nginx)
+                 Port 80 / 443
+                ┌────────┴────────┐
+                ▼                 ▼
+          auth-nginx         notes-nginx
+                │                 │
+                ▼                 ▼
+         auth-service       notes-service
+
+
+auth-nginx is the HTTP server that proxies requests to PHP-FPM. 
+This is the recommended setup for inter-service HTTP communication in your architecture.
