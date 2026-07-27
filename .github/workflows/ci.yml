@@ -285,13 +285,15 @@ jobs:
 
             git pull origin main
 
-            docker compose pull
+            docker compose -f docker-compose.prod.yml pull
 
             docker images
 
-            docker compose up -d --force-recreate --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d \
+                --force-recreate \
+                --remove-orphans
 
-            docker compose ps
+            docker compose -f docker-compose.prod.yml ps
 
             docker image prune -f
 
