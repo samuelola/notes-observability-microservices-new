@@ -277,13 +277,21 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
 
           script: |
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login \
+              -u "${{ secrets.DOCKER_USERNAME }}" \
+              --password-stdin
+
             cd ~/notes-observability-microservices
 
             git pull origin main
 
             docker compose pull
 
-            docker compose up -d --remove-orphans
+            docker images
+
+            docker compose up -d --force-recreate --remove-orphans
+
+            docker compose ps
 
             docker image prune -f
 
