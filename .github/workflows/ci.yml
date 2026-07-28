@@ -289,6 +289,4 @@ jobs:
               --force-recreate \
               --remove-orphans
 
-            docker compose -f docker-compose.prod.yml ps
-
-            docker image prune -af     
+            docker image prune -af       
