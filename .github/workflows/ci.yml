@@ -281,20 +281,14 @@ jobs:
               -u "${{ secrets.DOCKER_USERNAME }}" \
               --password-stdin
 
-            cd ~/notes-observability-microservices
-
-            git pull origin main
+            cd ~/deployment
 
             docker compose -f docker-compose.prod.yml pull
 
-            docker images
-
             docker compose -f docker-compose.prod.yml up -d \
-                --force-recreate \
-                --remove-orphans
+              --force-recreate \
+              --remove-orphans
 
             docker compose -f docker-compose.prod.yml ps
 
-            docker image prune -f
-
-            docker system prune -f        
+            docker image prune -af     

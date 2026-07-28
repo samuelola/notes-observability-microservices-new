@@ -1,0 +1,12 @@
+deployment/
+│
+├── docker-compose.prod.yml
+├── auth-service/
+│   ├── .env
+│   └── docker/nginx/default.conf
+├── notes-service/
+│   ├── .env
+│   └── docker/nginx/default.conf
+├── prometheus/
+├── promtail-config.yml
+├── loki-config.yml
