@@ -8,6 +8,8 @@ use Modules\Notes\Application\Contracts\EventDispatcherInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
+use Modules\Notes\Infrastructure\Queue\ProcessNoteAnalytics;
+
 
 class CreateNoteHandler
 {
@@ -36,9 +38,11 @@ class CreateNoteHandler
         ]);
 
 
-        $this->events->dispatch(
-            new NoteCreated($note->id)
-        );
+        // $this->events->dispatch(
+        //     new NoteCreated($note->id)
+        // );
+
+        ProcessNoteAnalytics::dispatch($note->id);
 
         \Log::info('NoteCreated dispatched', [
             'note_id' => $note->id,
