@@ -100,7 +100,7 @@ jobs:
           script: |
             set -e
 
-            cd /notes-app
+            cd ./notes-app
 
             echo "Deploying version: ${IMAGE_TAG}"
 
