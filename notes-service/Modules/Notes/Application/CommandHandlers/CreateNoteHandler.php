@@ -44,6 +44,6 @@ class CreateNoteHandler
             'note_id' => $note->id,
         ]);
 
-        // return $note;
+        return $note;
     }
 }
