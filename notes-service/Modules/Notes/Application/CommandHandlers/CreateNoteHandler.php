@@ -33,13 +33,9 @@ class CreateNoteHandler
             "notes:user:{$command->userId}"
         );
 
-       
-        // $this->events->dispatch(
-        //     new NoteCreated($note->id)
-        // );
-
-        ProcessNoteAnalytics::dispatch($note->id);
-
+        $this->events->dispatch(
+            new NoteCreated($note->id)
+        );
 
         return $note;
     }
