@@ -33,20 +33,13 @@ class CreateNoteHandler
             "notes:user:{$command->userId}"
         );
 
-        \Log::info('About to dispatch NoteCreated', [
-            'note_id' => $note->id,
-        ]);
-
-
+       
         // $this->events->dispatch(
         //     new NoteCreated($note->id)
         // );
 
         ProcessNoteAnalytics::dispatch($note->id);
 
-        \Log::info('NoteCreated dispatched', [
-            'note_id' => $note->id,
-        ]);
 
         return $note;
     }
