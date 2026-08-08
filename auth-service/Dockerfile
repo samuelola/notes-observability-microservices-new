@@ -1,38 +1,55 @@
 FROM php:8.3-fpm
 
-WORKDIR /var/www
-
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     git \
+    curl \
     unzip \
-    libzip-dev \
+    zip \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    curl \
+    libzip-dev \
     && docker-php-ext-install \
         pdo_mysql \
         mbstring \
         bcmath \
+        exif \
+        gd \
         zip \
-    && pecl install redis \
+        pcntl \
+        sockets
+
+# Redis extension
+RUN git clone --depth 1 --branch 6.3.0 https://github.com/phpredis/phpredis.git /tmp/phpredis \
+    && cd /tmp/phpredis \
+    && phpize \
+    && ./configure \
+    && make -j"$(nproc)" \
+    && make install \
     && docker-php-ext-enable redis \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /tmp/phpredis
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-COPY composer.json composer.lock ./
+WORKDIR /var/www
 
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --prefer-dist \
-    --optimize-autoloader
-
+# Copy entire application
 COPY . .
 
-RUN php artisan optimize
+# Install Composer dependencies
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-interaction
 
-EXPOSE 8000
+# Permissions
+RUN mkdir -p storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+EXPOSE 9000
+
+CMD ["php-fpm"]
