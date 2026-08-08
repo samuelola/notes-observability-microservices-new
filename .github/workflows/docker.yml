@@ -92,36 +92,15 @@ jobs:
 
             cd ~/notes-app
 
-            echo "========================================="
-            echo "Deploying latest images"
-            echo "========================================="
+            echo "Pulling latest Docker images..."
+            docker compose -f docker-compose.prod.yml pull
 
-            echo "Validating Docker Compose configuration..."
+            echo "Recreating containers..."
+            docker compose -f docker-compose.prod.yml up -d --force-recreate
 
-            docker compose \
-              -f docker-compose.prod.yml \
-              config --quiet
-
-            echo "Pulling latest application images..."
-
-            docker compose \
-              -f docker-compose.prod.yml \
-              pull
-
-            echo "Starting application..."
-
-            docker compose \
-              -f docker-compose.prod.yml \
-              up -d
-
-            echo "Removing unused Docker images..."
-
+            echo "Removing unused images..."
             docker image prune -f
 
-            echo "========================================="
-            echo "Deployment completed"
-            echo "========================================="
+            echo "Deployment completed."
 
-            docker compose \
-              -f docker-compose.prod.yml \
-              ps
+            docker compose -f docker-compose.prod.yml ps
