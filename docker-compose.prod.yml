@@ -1,7 +1,7 @@
 services:
 
   auth:
-    image: sammy48/auth-service:${IMAGE_TAG:-latest}
+    image: sammy48/auth-service:latest
     container_name: auth-service
     env_file:
       - ./auth-service/.env
@@ -16,7 +16,7 @@ services:
       - microservices
 
   notes:
-    image: sammy48/notes-service:${IMAGE_TAG:-latest}
+    image: sammy48/notes-service:latest
     container_name: notes-service
     env_file:
       - ./notes-service/.env
@@ -66,7 +66,7 @@ services:
       - microservices
 
   notes-consumer:
-    image: sammy48/notes-service:${IMAGE_TAG:-latest}
+    image: sammy48/notes-service:latest
     container_name: notes-consumer
     working_dir: /var/www
     command: php artisan rabbitmq:consume-users
@@ -78,7 +78,7 @@ services:
       - microservices
 
   notes-consumer-loggedinmsg:
-    image: sammy48/notes-service:${IMAGE_TAG:-latest}
+    image: sammy48/notes-service:latest
     container_name: notes-consumer-loggedinmsg
     working_dir: /var/www
     command: php artisan rabbitmq:consume-user-logged-in
@@ -90,7 +90,7 @@ services:
       - microservices
 
   notes-worker:
-    image: sammy48/notes-service:${IMAGE_TAG:-latest}
+    image: sammy48/notes-service:latest
     container_name: notes-worker
     working_dir: /var/www
     command: php artisan queue:work redis --tries=3 --timeout=90
@@ -102,7 +102,7 @@ services:
       - microservices
 
   gateway:
-    image: sammy48/gateway:${IMAGE_TAG:-latest}
+    image: sammy48/gateway:latest
     container_name: api-gateway
     ports:
       - "80:80"
