@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'notes_db'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -62,21 +62,6 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
-        ],
-
-        'notes_db' => [
-            'driver' => 'mysql',
-            'url' => env('NOTES_DB_URL'),
-            'host' => env('NOTES_DB_HOST', env('DB_HOST')),
-            'port' => env('NOTES_DB_PORT', env('DB_PORT')),
-            'database' => env('NOTES_DB_DATABASE'),
-            'username' => env('NOTES_DB_USERNAME'),
-            'password' => env('NOTES_DB_PASSWORD'),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
         ],
 
         'mariadb' => [

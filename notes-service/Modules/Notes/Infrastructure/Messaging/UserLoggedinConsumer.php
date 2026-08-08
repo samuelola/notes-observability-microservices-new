@@ -2,17 +2,12 @@
 
 namespace Modules\Notes\Infrastructure\Messaging;
 
-use Illuminate\Support\Facades\Log;
-use Modules\Notes\Infrastructure\Persistence\Models\Note;
-use Modules\Notes\Infrastructure\Tracing\TraceManager;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use Modules\Notes\Infrastructure\Persistence\Models\Note;
+use Illuminate\Support\Facades\Log;
 
 class UserLoggedinConsumer
 {
-    public function __construct(
-        private TraceManager $trace,
-    ) {}
-
     public function consume(): void
     {
         $connection = new AMQPStreamConnection(
@@ -30,40 +25,26 @@ class UserLoggedinConsumer
             'user.loggedin',
             '',
             false,
-            false, // auto_ack = false
+            true,
             false,
             false,
             function ($message) {
 
-                $this->trace->span(
-                    'RabbitMQ Consume User Login',
-                    function () use ($message) {
+                $user = json_decode($message->body, true);
 
-                        $user = json_decode($message->body, true);
-
-                        $note = Note::create([
+                $note = Note::create([
                             'user_id' => $user['id'],
                             'title' => 'Welcome!',
                             'content' => 'Login is successful',
                         ]);
 
-                        Log::info('user.loggedin', [
-                            'service' => 'notes',
-                            'user_id' => $user['id'],
-                            'correlation_id' => $user['correlation_id'],
-                            'trace_id' => $user['trace_id'],
-                            // 'note_msg' => $note->toArray(),
-                        ]);
-
-                        $message->ack();
-
-                    },
-                    [
-                        'messaging.system' => 'rabbitmq',
-                        'messaging.destination' => 'user.loggedin',
-                    ]
-                );
-
+                Log::info('user.loggedin', [
+                    'service' => 'notes',
+                    'user_id' => $user['id'],
+                    'correlation_id' => $user['correlation_id'],
+                    
+                    // 'note_msg' => $note->toArray(),
+                ]);
             }
         );
 

@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'auth_db'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -64,21 +64,7 @@ return [
             ]) : [],
         ],
 
-        'auth_db' => [
-            'driver' => 'mysql',
-            'url' => env('AUTH_DB_URL'),
-            'host' => env('AUTH_DB_HOST'),
-            'port' => env('AUTH_DB_PORT'),
-            'database' => env('AUTH_DB_DATABASE'),
-            'username' => env('AUTH_DB_USERNAME'),
-            'password' => env('AUTH_DB_PASSWORD'),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ],
-
+       
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

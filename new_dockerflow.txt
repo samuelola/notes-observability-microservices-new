@@ -1,0 +1,18 @@
+GitHub
+   │
+   │ push to main
+   ▼
+GitHub Actions
+   │
+   ├── build auth-service
+   ├── build notes-service
+   └── build gateway
+          │
+          ▼
+      Docker Hub
+          │
+          │ docker pull
+          ▼
+        EC2
+          │
+          └── docker compose up -d

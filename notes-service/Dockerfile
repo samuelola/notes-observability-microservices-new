@@ -1,49 +1,38 @@
 FROM php:8.3-fpm
 
-# Install dependencies
+WORKDIR /var/www
+
 RUN apt-get update && apt-get install -y \
     git \
-    curl \
     unzip \
-    zip \
+    libzip-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    libzip-dev \
+    curl \
     && docker-php-ext-install \
         pdo_mysql \
         mbstring \
         bcmath \
-        exif \
-        gd \
         zip \
-        pcntl \
-        sockets
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && rm -rf /var/lib/apt/lists/*
 
-# Redis extension
-RUN pecl install redis \
-    && docker-php-ext-enable redis
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
 
-WORKDIR /var/www
-
-# Copy entire application
-COPY . .
-
-# Install Composer dependencies
 RUN composer install \
     --no-dev \
+    --no-interaction \
     --prefer-dist \
-    --optimize-autoloader \
-    --no-interaction
+    --optimize-autoloader
 
-# Permissions
-RUN mkdir -p storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+COPY . .
 
-EXPOSE 9000
+RUN php artisan optimize
 
-CMD ["php-fpm"]
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

@@ -79,7 +79,6 @@ class NoteController extends Controller
             'note_id' => $note->id,
             'user_id' => $note->user_id,
             'correlation_id' => request()->header('X-Correlation-ID'),
-            'trace_id' => request()->header('trace_id'),
         ]);
 
         return ApiResponse::create(

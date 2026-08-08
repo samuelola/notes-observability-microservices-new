@@ -18,7 +18,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    // protected $connection = 'auth_db';
 
     /**
      * Get the attributes that should be cast.

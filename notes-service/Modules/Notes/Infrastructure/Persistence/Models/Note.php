@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Note extends Model
 {
-    // protected $connection = 'notes_db';
+    
     protected $guarded = [];
 
     // scope for optimized queries

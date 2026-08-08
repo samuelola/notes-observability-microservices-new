@@ -2,9 +2,9 @@
 
 namespace Modules\Notes\Infrastructure\Messaging;
 
-use Illuminate\Support\Facades\Log;
-use Modules\Notes\Infrastructure\Persistence\Models\Note;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use Modules\Notes\Infrastructure\Persistence\Models\Note;
+use Illuminate\Support\Facades\Log;
 
 class UserRegisteredConsumer
 {
@@ -25,37 +25,19 @@ class UserRegisteredConsumer
             'user.registered',
             '',
             false,
-            false,
+            true,
             false,
             false,
             function ($message) {
 
-                $this->trace->span(
-                    'RabbitMQ Consume User Register',
-                    function () use ($message) {
+                $user = json_decode($message->body, true);
 
-                        $user = json_decode($message->body, true);
-
-                        Log::info('user.registered', [
-                            'service' => 'notes',
-                            'user_id' => $user['id'],
-                            'correlation_id' => $user['correlation_id'],
-                            'trace_id' => $user['trace_id'],
-                        ]);
-                        Note::create([
-                            'user_id' => $user['id'],
-                            'title' => 'Welcome!',
-                            'content' => 'Thanks for joining. This is your first note.',
-                        ]);
-
-                        $message->ack();
-
-                    },
-                    [
-                        'messaging.system' => 'rabbitmq',
-                        'messaging.destination' => 'user.registered',
-                    ]
-                );
+                Log::info('Publishing to RabbitMQ', $user);
+                Note::create([
+                    'user_id' => $user['id'],
+                    'title' => 'Welcome!',
+                    'content' => 'Thanks for joining. This is your first note.'
+                ]);
             }
         );
 

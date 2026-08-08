@@ -14,8 +14,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
+
 Route::prefix('api/v1')->group(function () {
-    Route::middleware(['auth.correlation', 'auth.tracing'])->group(function () {
+    // Route::middleware(['auth.correlation', 'auth.tracing'])->group(function () {
+    //     Route::post('/register', [AuthController::class, 'register']);
+    //     Route::post('/login', [AuthController::class, 'login']);
+    //     Route::get('/test', [AuthController::class, 'test']);
+    // });
+
+    Route::middleware(['auth.correlation'])->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
         Route::get('/test', [AuthController::class, 'test']);

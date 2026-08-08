@@ -16,7 +16,6 @@ class RegisterHandler
 
     public function handle(RegisterCommand $command)
     {
-
         $user = $this->repo->createUser($command);
         $this->publisher->publish('user.registered', [
 

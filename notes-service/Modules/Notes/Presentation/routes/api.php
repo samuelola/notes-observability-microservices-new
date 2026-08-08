@@ -10,7 +10,6 @@ Route::prefix('api/v1')->group(function () {
         'auth.service',
         'note_inactive_owner',
         'note.correlation',
-        'note.tracing',
     ])->group(function () {
         Route::get('/notes', [NoteController::class, 'index']);
         Route::post('/notes', [NoteController::class, 'store']);
