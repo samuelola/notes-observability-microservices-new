@@ -1,7 +1,9 @@
-name: Build and Push Docker Images
+name: Build, Push and Deploy Docker Images
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*.*.*'
 
@@ -34,6 +36,10 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      # --------------------------------------------------
+      # BUILD + PUSH AUTH SERVICE
+      # --------------------------------------------------
+
       - name: Build and push Auth service
         uses: docker/build-push-action@v6
         with:
@@ -45,6 +51,10 @@ jobs:
             ${{ env.DOCKERHUB_USERNAME }}/auth-service:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # --------------------------------------------------
+      # BUILD + PUSH NOTES SERVICE
+      # --------------------------------------------------
 
       - name: Build and push Notes service
         uses: docker/build-push-action@v6
@@ -58,6 +68,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # --------------------------------------------------
+      # BUILD + PUSH GATEWAY
+      # --------------------------------------------------
+
       - name: Build and push Gateway
         uses: docker/build-push-action@v6
         with:
@@ -69,3 +83,47 @@ jobs:
             ${{ env.DOCKERHUB_USERNAME }}/gateway:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # --------------------------------------------------
+      # DEPLOY TO EC2
+      # --------------------------------------------------
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          IMAGE_TAG: ${{ steps.version.outputs.version }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: IMAGE_TAG
+          script: |
+            set -e
+
+            cd /opt/notes-app
+
+            echo "Deploying version: ${IMAGE_TAG}"
+
+            export IMAGE_TAG="${IMAGE_TAG}"
+
+            echo "Pulling application images..."
+
+            docker compose \
+              -f docker-compose.prod.yml \
+              pull
+
+            echo "Starting application..."
+
+            docker compose \
+              -f docker-compose.prod.yml \
+              up -d
+
+            echo "Removing unused Docker images..."
+
+            docker image prune -f
+
+            echo "Deployment completed."
+
+            docker compose \
+              -f docker-compose.prod.yml \
+              ps
