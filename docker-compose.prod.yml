@@ -143,7 +143,7 @@ services:
 
 networks:
   microservices:
-  driver: bridge
+    driver: bridge
 
 volumes:
   mysql-data:
