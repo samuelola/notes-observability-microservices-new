@@ -70,6 +70,8 @@ services:
     container_name: notes-consumer
     working_dir: /var/www
     command: php artisan rabbitmq:consume-users
+    env_file:
+      - ./notes-service/.env
     depends_on:
       - rabbitmq
       - mysql
@@ -82,6 +84,8 @@ services:
     container_name: notes-consumer-loggedinmsg
     working_dir: /var/www
     command: php artisan rabbitmq:consume-user-logged-in
+    env_file:
+      - ./notes-service/.env
     depends_on:
       - rabbitmq
       - mysql
@@ -94,6 +98,8 @@ services:
     container_name: notes-worker
     working_dir: /var/www
     command: php artisan queue:work redis --tries=3 --timeout=90
+    env_file:
+      - ./notes-service/.env
     depends_on:
       - redis
       - mysql
