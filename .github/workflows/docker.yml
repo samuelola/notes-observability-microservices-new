@@ -49,8 +49,8 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/auth-service:${{ steps.version.outputs.version }}
             ${{ env.DOCKERHUB_USERNAME }}/auth-service:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
       # --------------------------------------------------
       # BUILD + PUSH NOTES SERVICE
@@ -65,8 +65,8 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/notes-service:${{ steps.version.outputs.version }}
             ${{ env.DOCKERHUB_USERNAME }}/notes-service:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
       # --------------------------------------------------
       # BUILD + PUSH GATEWAY
@@ -81,8 +81,8 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/gateway:${{ steps.version.outputs.version }}
             ${{ env.DOCKERHUB_USERNAME }}/gateway:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
       # --------------------------------------------------
       # DEPLOY TO EC2
