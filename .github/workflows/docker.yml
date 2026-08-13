@@ -96,10 +96,8 @@ jobs:
       - name: Run Auth tests
         run: |
           docker run --rm \
-            -v "${{ github.workspace }}/auth-service:/var/www" \
-            -w /var/www \
             auth-service:test \
-            php artisan test
+            ./vendor/bin/pint --test
 
       # --------------------------------------------------
       # NOTES TESTS
@@ -108,10 +106,8 @@ jobs:
       - name: Run Notes tests
         run: |
           docker run --rm \
-            -v "${{ github.workspace }}/notes-service:/var/www" \
-            -w /var/www \
             notes-service:test \
-            php artisan test
+            ./vendor/bin/pint --test
 
 
   # ==================================================
