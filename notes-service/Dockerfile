@@ -4,23 +4,20 @@ FROM php:8.3-fpm
 RUN apt-get update && apt-get install -y \
     git \
     curl \
-    unzip \
     zip \
+    unzip \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
-    && docker-php-ext-install \
-        pdo_mysql \
-        mbstring \
-        bcmath \
-        exif \
-        gd \
-        zip \
-        pcntl \
-        sockets
+    zlib1g-dev \
+    g++ \
+    autoconf \
+    pkg-config \
+    make \
+    && rm -rf /var/lib/apt/lists/*
 
 # Configure GD with JPEG support
 RUN docker-php-ext-configure gd \
