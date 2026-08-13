@@ -2,11 +2,8 @@
 
 namespace Modules\Notes\Application\Commands;
 
-
 class CreateNoteCommand
 {
-    
-
     public string $title;
 
     public string $content;

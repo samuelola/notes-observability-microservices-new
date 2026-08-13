@@ -5,12 +5,11 @@ namespace Modules\Notes\Application\CommandHandlers;
 use Modules\Notes\Application\Commands\CreateNoteCommand;
 use Modules\Notes\Application\Contracts\CacheInterface;
 use Modules\Notes\Application\Contracts\EventDispatcherInterface;
+use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
 use Modules\Notes\Infrastructure\Queue\ProcessNoteAnalytics;
-use Modules\Notes\Application\Contracts\ImageStorageInterface;
-
 
 class CreateNoteHandler
 {
@@ -26,11 +25,10 @@ class CreateNoteHandler
     public function handle(CreateNoteCommand $command)
     {
 
-
         $imagePath = null;
 
         if ($command->image) {
-            
+
             $imagePath = $this->imageStorage->store(
                 $command->image,
                 "notes/{$command->userId}"

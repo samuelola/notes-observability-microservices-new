@@ -4,9 +4,9 @@ namespace Modules\Notes\Application\CommandHandlers;
 
 use Modules\Notes\Application\Commands\DeleteNoteCommand;
 use Modules\Notes\Application\Contracts\CacheInterface;
+use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
-use Modules\Notes\Application\Contracts\ImageStorageInterface;
 
 class DeleteNoteHandler
 {
@@ -20,7 +20,7 @@ class DeleteNoteHandler
     public function handle(DeleteNoteCommand $command)
     {
 
-         // Get the note before deleting it so we know its image path
+        // Get the note before deleting it so we know its image path
         $note = $this->repo->findForUser(
             $command->noteId,
             $command->userId
@@ -30,7 +30,7 @@ class DeleteNoteHandler
         if ($note->image_path) {
             $this->imageStorage->delete($note->image_path);
         }
-        
+
         // Delete note from database
         $result = $this->repo->delete(
             $command->noteId,

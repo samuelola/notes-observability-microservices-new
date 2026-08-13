@@ -6,6 +6,7 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Modules\Notes\Application\Contracts\CacheInterface;
 use Modules\Notes\Application\Contracts\EventDispatcherInterface;
+use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Application\Contracts\NoteServiceInterface;
 use Modules\Notes\Application\Services\NoteService;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
@@ -14,13 +15,12 @@ use Modules\Notes\Infrastructure\Cache\LaravelCache;
 use Modules\Notes\Infrastructure\Events\LaravelEventDispatcher;
 use Modules\Notes\Infrastructure\External\HttpAuthClient;
 use Modules\Notes\Infrastructure\Persistence\Repositories\NoteRepository;
+use Modules\Notes\Infrastructure\Storage\S3ImageStorage;
 use Modules\Notes\Infrastructure\Tracing\OpenTelemetryTracer;
 use Modules\Notes\Presentation\Http\Middleware\AuthenticateWithAuthService;
 use Modules\Notes\Presentation\Http\Middleware\CheckUserInactivity;
 use Modules\Notes\Presentation\Http\Middleware\CorrelationIdMiddleware;
 use Modules\Notes\Presentation\Http\Middleware\TraceMiddleware;
-use Modules\Notes\Application\Contracts\ImageStorageInterface;
-use Modules\Notes\Infrastructure\Storage\S3ImageStorage;
 
 class NotesServiceProvider extends ServiceProvider
 {

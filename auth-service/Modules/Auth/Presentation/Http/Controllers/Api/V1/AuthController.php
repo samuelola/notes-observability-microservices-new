@@ -24,13 +24,12 @@ class AuthController extends Controller
         $dto = CreateAuthDTO::fromArray(
             $request->validated()
         );
-        
+
         $newdto = new RegisterCommand(
             $dto->name,
             $dto->email,
             $dto->password
         );
-        
 
         $user = $handler->handle($newdto);
 

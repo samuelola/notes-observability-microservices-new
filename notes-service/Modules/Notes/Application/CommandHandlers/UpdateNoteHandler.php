@@ -68,4 +68,3 @@ class UpdateNoteHandler
         return $note;
     }
 }
-

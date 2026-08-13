@@ -13,9 +13,9 @@ use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
 it('creates a note, clears the cache and dispatches an event', function () {
 
     $image = UploadedFile::fake()->create(
-    'new-image.jpg',
-    100,
-    'image/jpeg'
+        'new-image.jpg',
+        100,
+        'image/jpeg'
     );
 
     $note = (object) [

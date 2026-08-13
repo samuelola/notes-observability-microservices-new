@@ -2,9 +2,9 @@
 
 namespace Modules\Notes\Infrastructure\Messaging;
 
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use Modules\Notes\Infrastructure\Persistence\Models\Note;
 use Illuminate\Support\Facades\Log;
+use Modules\Notes\Infrastructure\Persistence\Models\Note;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class UserRegisteredConsumer
 {
@@ -36,7 +36,7 @@ class UserRegisteredConsumer
                 Note::create([
                     'user_id' => $user['id'],
                     'title' => 'Welcome!',
-                    'content' => 'Thanks for joining. This is your first note.'
+                    'content' => 'Thanks for joining. This is your first note.',
                 ]);
             }
         );

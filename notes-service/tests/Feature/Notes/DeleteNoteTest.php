@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Infrastructure\Persistence\Models\Note;
-use Mockery;
 
 uses(RefreshDatabase::class);
 
@@ -94,4 +94,3 @@ it('deletes a note and its image successfully', function () {
         'id' => $note->id,
     ]);
 });
-

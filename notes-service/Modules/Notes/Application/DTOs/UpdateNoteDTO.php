@@ -20,7 +20,7 @@ class UpdateNoteDTO
 
     public $image;
 
-    public function __construct($title, $content, $userId, $noteId,$image)
+    public function __construct($title, $content, $userId, $noteId, $image)
     {
 
         $this->title = $title;
@@ -29,7 +29,7 @@ class UpdateNoteDTO
         $this->noteId = $noteId;
     }
 
-    public static function fromArray(array $data, int $userId, int $noteId,$image): self
+    public static function fromArray(array $data, int $userId, int $noteId, $image): self
     {
         return new self(
             title: $data['title'],

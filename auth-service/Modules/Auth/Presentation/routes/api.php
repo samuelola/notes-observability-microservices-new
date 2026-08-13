@@ -14,7 +14,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
-
 Route::prefix('api/v1')->group(function () {
     // Route::middleware(['auth.correlation', 'auth.tracing'])->group(function () {
     //     Route::post('/register', [AuthController::class, 'register']);

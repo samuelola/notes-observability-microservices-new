@@ -7,7 +7,6 @@ use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
 
-
 uses(RefreshDatabase::class);
 
 it('creates a note successfully with an image', function () {
@@ -111,4 +110,3 @@ it('creates a note successfully with an image', function () {
         'image_path' => 'notes/10/test-image.jpg',
     ]);
 });
-

@@ -7,9 +7,9 @@ use Modules\Notes\Domain\Contracts\AuthClientInterface;
 
 class HttpAuthClient implements AuthClientInterface
 {
-     public function userFromToken(string $token)
+    public function userFromToken(string $token)
     {
-        
+
         $response = Http::withToken($token)
             ->acceptJson()
             ->get(
@@ -22,6 +22,4 @@ class HttpAuthClient implements AuthClientInterface
 
         return $response->json();
     }
-
-    
 }

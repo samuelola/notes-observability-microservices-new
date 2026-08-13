@@ -23,7 +23,7 @@ return new class extends Migration
     {
         Schema::table('notes', function (Blueprint $table) {
             $table->dropColumn([
-                'image_path'
+                'image_path',
             ]);
         });
     }

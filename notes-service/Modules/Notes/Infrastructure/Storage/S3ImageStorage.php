@@ -2,7 +2,6 @@
 
 namespace Modules\Notes\Infrastructure\Storage;
 
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Notes\Application\Contracts\ImageStorageInterface;
 
@@ -22,5 +21,4 @@ class S3ImageStorage implements ImageStorageInterface
     {
         return Storage::disk('s3')->url($path);
     }
-    
 }

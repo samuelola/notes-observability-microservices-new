@@ -2,9 +2,9 @@
 
 namespace Modules\Notes\Infrastructure\Messaging;
 
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use Modules\Notes\Infrastructure\Persistence\Models\Note;
 use Illuminate\Support\Facades\Log;
+use Modules\Notes\Infrastructure\Persistence\Models\Note;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class UserLoggedinConsumer
 {
@@ -33,16 +33,16 @@ class UserLoggedinConsumer
                 $user = json_decode($message->body, true);
 
                 $note = Note::create([
-                            'user_id' => $user['id'],
-                            'title' => 'Welcome!',
-                            'content' => 'Login is successful',
-                        ]);
+                    'user_id' => $user['id'],
+                    'title' => 'Welcome!',
+                    'content' => 'Login is successful',
+                ]);
 
                 Log::info('user.loggedin', [
                     'service' => 'notes',
                     'user_id' => $user['id'],
                     'correlation_id' => $user['correlation_id'],
-                    
+
                     // 'note_msg' => $note->toArray(),
                 ]);
             }
