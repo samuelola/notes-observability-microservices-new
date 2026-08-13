@@ -71,11 +71,7 @@ jobs:
 
       - name: Run Pint - Auth
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}/auth-service:/var/www" \
-            -w /var/www \
-            auth-service:test \
-            ./vendor/bin/pint --test
+          docker run --rm auth-service:test ./vendor/bin/pint --test
 
       # --------------------------------------------------
       # PINT - NOTES
@@ -83,11 +79,7 @@ jobs:
 
       - name: Run Pint - Notes
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}/notes-service:/var/www" \
-            -w /var/www \
-            notes-service:test \
-            ./vendor/bin/pint --test
+          docker run --rm notes-service:test ./vendor/bin/pint --test
 
       # --------------------------------------------------
       # AUTH TESTS
@@ -95,9 +87,7 @@ jobs:
 
       - name: Run Auth tests
         run: |
-          docker run --rm \
-            auth-service:test \
-            ./vendor/bin/pint --test
+          docker run --rm auth-service:test php artisan test
 
       # --------------------------------------------------
       # NOTES TESTS
@@ -105,9 +95,7 @@ jobs:
 
       - name: Run Notes tests
         run: |
-          docker run --rm \
-            notes-service:test \
-            ./vendor/bin/pint --test
+          docker run --rm notes-service:test php artisan test
 
 
   # ==================================================

@@ -46,11 +46,13 @@ WORKDIR /var/www
 COPY . .
 
 # Install Composer dependencies
-RUN composer install \
-    --no-dev \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-interaction
+ARG INSTALL_DEV=false
+
+RUN if [ "$INSTALL_DEV" = "true" ]; then \
+        composer install --optimize-autoloader --no-interaction --prefer-dist; \
+    else \
+        composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; \
+    fi
 
 # Permissions
 RUN mkdir -p storage bootstrap/cache \
