@@ -36,6 +36,7 @@ class GetUsersNoteHandler
                         'title' => $note->title,
                         'content' => $note->content,
                         'user_id' => $note->user_id,
+                        'image_path' => $note->image_path,
                         'created_at' => optional($note->created_at)->toDateTimeString(),
                         'updated_at' => optional($note->updated_at)->toDateTimeString(),
                     ];

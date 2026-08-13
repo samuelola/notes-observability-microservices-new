@@ -16,20 +16,24 @@ class CreateNoteDTO
 
     public readonly int $userId;
 
-    public function __construct($title, $content, $userId)
+    public $image;
+
+    public function __construct($title, $content, $userId, $image)
     {
 
         $this->title = $title;
         $this->content = $content;
         $this->userId = $userId;
+        $this->image = $image;
     }
 
-    public static function fromArray(array $data, int $userId): self
+    public static function fromArray(array $data, int $userId, $image): self
     {
         return new self(
             title: $data['title'],
             content: $data['content'],
             userId: $userId,
+            image: $image
         );
     }
 }

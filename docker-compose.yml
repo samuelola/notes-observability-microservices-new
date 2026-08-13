@@ -5,10 +5,10 @@ services:
       context: ./auth-service
     image: auth-service:local  
     container_name: auth-service
-    env_file:
-      - ./auth-service/.env
     ports:
       - "8000:8000"
+    volumes:
+      - ./auth-service:/var/www  
     working_dir: /var/www
     command: php artisan serve --host=0.0.0.0 --port=8000
     depends_on:
@@ -21,11 +21,11 @@ services:
       context: ./notes-service
     image: notes-service:local  
     container_name: notes-service
-    env_file:
-      - ./notes-service/.env
     ports:
       - "8001:8001"
     working_dir: /var/www
+    volumes:
+      - ./notes-service:/var/www
     command: php artisan serve --host=0.0.0.0 --port=8001
     depends_on:
       - mysql

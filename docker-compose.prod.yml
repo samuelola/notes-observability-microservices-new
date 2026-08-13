@@ -97,7 +97,7 @@ services:
     image: sammy48/notes-service:latest
     container_name: notes-worker
     working_dir: /var/www
-    command: php artisan queue:work redis --tries=3 --timeout=90
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=90
     env_file:
       - ./notes-service/.env
     depends_on:

@@ -1,4 +1,4 @@
-name: Build, Push and Deploy Docker Images
+name: Build, Test, Push and Deploy Docker Images
 
 on:
   push:
@@ -12,8 +12,118 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
-  build-and-push:
+
+  # ==================================================
+  # TEST AUTH + NOTES
+  # ==================================================
+
+  test:
+    name: Test Auth and Notes
     runs-on: ubuntu-latest
+
+    steps:
+
+      # --------------------------------------------------
+      # CHECKOUT
+      # --------------------------------------------------
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --------------------------------------------------
+      # DOCKER
+      # --------------------------------------------------
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # --------------------------------------------------
+      # BUILD AUTH TEST IMAGE
+      # --------------------------------------------------
+
+      - name: Build Auth test image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth-service
+          file: ./auth-service/Dockerfile
+          load: true
+          tags: auth-service:test
+          build-args: |
+            INSTALL_DEV=true
+
+      # --------------------------------------------------
+      # BUILD NOTES TEST IMAGE
+      # --------------------------------------------------
+
+      - name: Build Notes test image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./notes-service
+          file: ./notes-service/Dockerfile
+          load: true
+          tags: notes-service:test
+          build-args: |
+            INSTALL_DEV=true
+
+      # --------------------------------------------------
+      # PINT - AUTH
+      # --------------------------------------------------
+
+      - name: Run Pint - Auth
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/auth-service:/var/www" \
+            -w /var/www \
+            auth-service:test \
+            ./vendor/bin/pint --test
+
+      # --------------------------------------------------
+      # PINT - NOTES
+      # --------------------------------------------------
+
+      - name: Run Pint - Notes
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/notes-service:/var/www" \
+            -w /var/www \
+            notes-service:test \
+            ./vendor/bin/pint --test
+
+      # --------------------------------------------------
+      # AUTH TESTS
+      # --------------------------------------------------
+
+      - name: Run Auth tests
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/auth-service:/var/www" \
+            -w /var/www \
+            auth-service:test \
+            php artisan test
+
+      # --------------------------------------------------
+      # NOTES TESTS
+      # --------------------------------------------------
+
+      - name: Run Notes tests
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/notes-service:/var/www" \
+            -w /var/www \
+            notes-service:test \
+            php artisan test
+
+
+  # ==================================================
+  # BUILD + PUSH
+  # ==================================================
+
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+
+    needs:
+      - test
 
     steps:
 
@@ -76,9 +186,19 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/gateway:latest
 
-      # --------------------------------------------------
-      # DEPLOY TO EC2
-      # --------------------------------------------------
+
+  # ==================================================
+  # DEPLOY TO EC2
+  # ==================================================
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    needs:
+      - build-and-push
+
+    steps:
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.2
@@ -92,15 +212,31 @@ jobs:
 
             cd ~/notes-app
 
+            echo "========================================="
             echo "Pulling latest Docker images..."
+            echo "========================================="
+
             docker compose -f docker-compose.prod.yml pull
 
+            echo "========================================="
             echo "Recreating containers..."
-            docker compose -f docker-compose.prod.yml up -d --force-recreate
+            echo "========================================="
 
+            docker compose \
+              -f docker-compose.prod.yml \
+              up -d \
+              --force-recreate
+
+            echo "========================================="
             echo "Removing unused images..."
+            echo "========================================="
+
             docker image prune -f
 
+            echo "========================================="
             echo "Deployment completed."
+            echo "========================================="
 
-            docker compose -f docker-compose.prod.yml ps
+            docker compose \
+              -f docker-compose.prod.yml \
+              ps

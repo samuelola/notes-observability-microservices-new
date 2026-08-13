@@ -3,33 +3,52 @@
 use Modules\Notes\Application\CommandHandlers\DeleteNoteHandler;
 use Modules\Notes\Application\Commands\DeleteNoteCommand;
 use Modules\Notes\Application\Contracts\CacheInterface;
+use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
 
-it('deletes a note and clears the cache', function () {
+it('deletes a note and its image successfully', function () {
 
     $repo = Mockery::mock(NoteRepositoryInterface::class);
 
-    $repo->shouldReceive('delete')
+    $repo
+        ->shouldReceive('findForUser')
         ->once()
-        ->with(
-            5,      // note id
-            10      // user id
-        )
+        ->with(5, 10)
+        ->andReturn((object) [
+            'id' => 5,
+            'user_id' => 10,
+            'image_path' => 'notes/10/test-image.jpg',
+        ]);
+
+    $repo
+        ->shouldReceive('delete')
+        ->once()
+        ->with(5, 10)
         ->andReturn(true);
 
     $cache = Mockery::mock(CacheInterface::class);
 
-    $cache->shouldReceive('forget')
+    $cache
+        ->shouldReceive('forget')
         ->once()
         ->with('notes:user:10');
+
+    $imageStorage = Mockery::mock(ImageStorageInterface::class);
+
+    $imageStorage
+        ->shouldReceive('delete')
+        ->once()
+        ->with('notes/10/test-image.jpg')
+        ->andReturn(true);
 
     $authClient = Mockery::mock(AuthClientInterface::class);
 
     $handler = new DeleteNoteHandler(
         $repo,
         $authClient,
-        $cache
+        $cache,
+        $imageStorage
     );
 
     $command = new DeleteNoteCommand(

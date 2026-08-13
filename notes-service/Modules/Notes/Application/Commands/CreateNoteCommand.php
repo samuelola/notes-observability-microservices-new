@@ -2,13 +2,10 @@
 
 namespace Modules\Notes\Application\Commands;
 
+
 class CreateNoteCommand
 {
-    // public function __construct(
-    //     public string $title,
-    //     public string $content,
-    //     public int $userId
-    // ) {}
+    
 
     public string $title;
 
@@ -16,11 +13,14 @@ class CreateNoteCommand
 
     public int $userId;
 
-    public function __construct($title, $content, $userId)
+    public $image;
+
+    public function __construct($title, $content, $userId, $image)
     {
 
         $this->title = $title;
         $this->content = $content;
         $this->userId = $userId;
+        $this->image = $image;
     }
 }

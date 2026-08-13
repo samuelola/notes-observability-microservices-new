@@ -20,6 +20,7 @@ class NoteCollection extends ResourceCollection
                 'user_id' => $note->user_id,
                 'title' => $note->title,
                 'content' => $note->content,
+                'image_path' => $this->image_path,
                 'created_at' => $note->created_at?->toDateTimeString(),
             ]),
         ];

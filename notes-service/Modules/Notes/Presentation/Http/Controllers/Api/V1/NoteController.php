@@ -62,14 +62,16 @@ class NoteController extends Controller
         $user = $request->attributes->get('user');
         $dto = CreateNoteDTO::fromArray(
             $request->validated(),
-            $user->id
+            $user->id,
+            $request->file('image')
         );
 
         // WRITE SIDE (COMMAND)  : splitting Noteservice
         $newdto = new CreateNoteCommand(
             $dto->title,
             $dto->content,
-            $dto->userId
+            $dto->userId,
+            $dto->image
         );
 
         $note = $handler->handle($newdto);
@@ -94,14 +96,16 @@ class NoteController extends Controller
         $dto = UpdateNoteDTO::fromArray(
             $request->validated(),
             $user->id,
-            $noteId
+            $noteId,
+            $request->file('image')
         );
 
         $updatedto = new UpdateNoteCommand(
             $dto->title,
             $dto->content,
             $dto->userId,
-            $dto->noteId
+            $dto->noteId,
+            $dto->image
         );
 
         $note = $handler->handle($updatedto);

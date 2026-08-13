@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     zip \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
@@ -19,6 +21,11 @@ RUN apt-get update && apt-get install -y \
         zip \
         pcntl \
         sockets
+
+# Configure GD with JPEG support
+RUN docker-php-ext-configure gd \
+    --with-freetype \
+    --with-jpeg         
 
 # Redis extension
 RUN git clone --depth 1 --branch 6.3.0 https://github.com/phpredis/phpredis.git /tmp/phpredis \

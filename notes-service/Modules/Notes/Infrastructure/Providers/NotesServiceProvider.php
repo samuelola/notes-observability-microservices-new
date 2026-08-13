@@ -19,6 +19,8 @@ use Modules\Notes\Presentation\Http\Middleware\AuthenticateWithAuthService;
 use Modules\Notes\Presentation\Http\Middleware\CheckUserInactivity;
 use Modules\Notes\Presentation\Http\Middleware\CorrelationIdMiddleware;
 use Modules\Notes\Presentation\Http\Middleware\TraceMiddleware;
+use Modules\Notes\Application\Contracts\ImageStorageInterface;
+use Modules\Notes\Infrastructure\Storage\S3ImageStorage;
 
 class NotesServiceProvider extends ServiceProvider
 {
@@ -42,6 +44,11 @@ class NotesServiceProvider extends ServiceProvider
         $this->app->bind(
             EventDispatcherInterface::class,
             LaravelEventDispatcher::class
+        );
+
+        $this->app->bind(
+            ImageStorageInterface::class,
+            S3ImageStorage::class
         );
     }
 

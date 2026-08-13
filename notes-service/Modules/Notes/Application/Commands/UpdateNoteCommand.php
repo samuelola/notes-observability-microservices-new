@@ -8,6 +8,7 @@ class UpdateNoteCommand
         public string $title,
         public string $content,
         public int $userId,
-        public int $noteId
+        public int $noteId,
+        public $image
     ) {}
 }

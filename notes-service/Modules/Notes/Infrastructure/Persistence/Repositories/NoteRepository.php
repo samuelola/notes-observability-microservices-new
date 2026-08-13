@@ -8,7 +8,7 @@ use Modules\Notes\Infrastructure\Persistence\Models\Note;
 class NoteRepository implements NoteRepositoryInterface
 {
     public function create(array $data)
-    {
+    {   
         return Note::create($data);
     }
 
@@ -22,7 +22,7 @@ class NoteRepository implements NoteRepositoryInterface
     public function allUserNotes(int $userId, int $page)
     {
         return Note::forUser($userId)
-            ->select(['id', 'user_id', 'title', 'content', 'created_at']) // avoid heavy content load
+            ->select(['id', 'user_id', 'title', 'content','image_path', 'created_at']) // avoid heavy content load
             ->orderByDesc('created_at')
             ->paginate(10);
     }
