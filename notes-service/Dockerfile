@@ -2,7 +2,7 @@ FROM php:8.3-fpm
 
 ARG INSTALL_DEV=false
 
-# Install dependencies
+# System dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -21,13 +21,23 @@ RUN apt-get update && apt-get install -y \
     make \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure GD with JPEG support
+# PHP extensions
 RUN docker-php-ext-configure gd \
-    --with-freetype \
-    --with-jpeg         
+        --with-freetype \
+        --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        sockets
 
-# Redis extension
-RUN git clone --depth 1 --branch 6.3.0 https://github.com/phpredis/phpredis.git /tmp/phpredis \
+# Redis
+RUN git clone --depth 1 --branch 6.3.0 \
+        https://github.com/phpredis/phpredis.git /tmp/phpredis \
     && cd /tmp/phpredis \
     && phpize \
     && ./configure \
@@ -37,27 +47,29 @@ RUN git clone --depth 1 --branch 6.3.0 https://github.com/phpredis/phpredis.git 
     && rm -rf /tmp/phpredis
 
 # Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy entire application
 COPY . .
 
-# Install Composer dependencies
-ARG INSTALL_DEV=false
+# Verify extensions BEFORE Composer
+RUN php -m | grep -E 'sockets|gd|redis'
 
+RUN php -r "var_dump(extension_loaded('sockets'));"
+RUN php -r "var_dump(function_exists('imagejpeg'));"
+
+# Install dependencies
 RUN if [ "$INSTALL_DEV" = "true" ]; then \
         composer install --optimize-autoloader --no-interaction --prefer-dist; \
     else \
         composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; \
     fi
 
-# Permissions
 RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-EXPOSE 9000
+EXPOSE 9000    
 
 CMD ["php-fpm"]
