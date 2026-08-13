@@ -49,7 +49,7 @@ class GetUsersNoteHandler
                     'from' => $paginator->firstItem(),
                     'to' => $paginator->lastItem(),
                     'has_more_pages' => $paginator->hasMorePages(),
-            ],
+                ],
             ];
         });
     }
