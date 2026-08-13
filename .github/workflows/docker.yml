@@ -87,7 +87,13 @@ jobs:
 
       - name: Run Auth tests
         run: |
-          docker run --rm auth-service:test php artisan test
+          docker run --rm \
+          -e APP_ENV=testing \
+          -e APP_KEY=base64:$(openssl rand -base64 32) \
+          -e DB_CONNECTION=sqlite \
+          -e DB_DATABASE=:memory: \
+          auth-service:test \
+          php artisan test
 
       # --------------------------------------------------
       # NOTES TESTS
@@ -95,7 +101,13 @@ jobs:
 
       - name: Run Notes tests
         run: |
-          docker run --rm notes-service:test php artisan test
+          docker run --rm \
+          -e APP_ENV=testing \
+          -e APP_KEY=base64:$(openssl rand -base64 32) \
+          -e DB_CONNECTION=sqlite \
+          -e DB_DATABASE=:memory: \
+          notes-service:test \
+          php artisan test
 
 
   # ==================================================
