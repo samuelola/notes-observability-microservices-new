@@ -5,11 +5,14 @@ namespace Modules\Notes\Presentation\Transformers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
+use Modules\Notes\Application\Contracts\ImageStorageInterface;
 
 class NoteResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+
+        $imageStorage = app(ImageStorageInterface::class);
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -17,11 +20,11 @@ class NoteResource extends JsonResource
             'content' => $this->content,
             'image_path' => $this->image_path,
             'image_url' => $this->image_path
-            ? Storage::disk('s3')->temporaryUrl(
-                $this->image_path,
-                now()->addMinutes(10)
-            )
-            : null,
+                ? $imageStorage->temporaryUrl(
+                    $this->image_path,
+                    10
+                )
+                : null,
             'created_at' => $this->created_at?->toDateTimeString(),
         ];
     }

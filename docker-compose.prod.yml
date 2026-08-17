@@ -147,6 +147,15 @@ services:
     networks:
       - microservices
 
+  frontend:
+    image: sammy48/notes-frontend:latest
+    container_name: notes-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - microservices    
+
 networks:
   microservices:
     driver: bridge

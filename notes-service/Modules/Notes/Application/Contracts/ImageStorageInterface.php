@@ -9,4 +9,9 @@ interface ImageStorageInterface
     public function delete($path);
 
     public function url($path);
+
+    public function temporaryUrl(
+        string $path,
+        int $minutes = 10
+    );
 }
