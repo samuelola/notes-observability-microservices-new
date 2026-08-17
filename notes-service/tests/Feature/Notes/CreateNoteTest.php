@@ -47,10 +47,22 @@ it('creates a note successfully with an image', function () {
         )
         ->andReturn('notes/10/test-image.jpg');
 
+    $imageStorage
+        ->shouldReceive('temporaryUrl')
+        ->once()
+        ->with(
+            'notes/10/test-image.jpg',
+            10
+        )
+        ->andReturn(
+            'https://example.com/temporary/test-image.jpg'
+        );    
+
     $this->app->instance(
         ImageStorageInterface::class,
         $imageStorage
     );
+    
 
     /*
      * Mock event dispatcher
