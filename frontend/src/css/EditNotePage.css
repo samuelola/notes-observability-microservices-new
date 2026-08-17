@@ -1,0 +1,131 @@
+.edit-note-page {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.edit-note-header {
+    margin-bottom: 24px;
+}
+
+.edit-note-header h2 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    color: #111827;
+}
+
+.edit-note-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.edit-note-form {
+    background: white;
+    border-radius: 14px;
+    padding: 28px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.form-group {
+    margin-bottom: 22px;
+}
+
+.form-group label,
+.current-image label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.current-image {
+    margin-bottom: 22px;
+}
+
+.current-image img {
+    width: 100%;
+    max-width: 400px;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.edit-note-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.cancel-button,
+.save-button {
+    padding: 11px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancel-button {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.cancel-button:hover {
+    background: #e5e7eb;
+}
+
+.save-button {
+    background: #2563eb;
+    color: white;
+}
+
+.save-button:hover {
+    background: #1d4ed8;
+}
+
+.save-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.edit-note-error {
+    margin-bottom: 20px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.edit-note-loading {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}

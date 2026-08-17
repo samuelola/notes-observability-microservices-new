@@ -1,0 +1,202 @@
+.notes-page {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.notes-page-header {
+    margin-bottom: 28px;
+}
+
+.notes-page-header h2 {
+    margin: 0;
+
+    font-size: 28px;
+    color: #111827;
+}
+
+.notes-page-header p {
+    margin-top: 6px;
+
+    color: #6b7280;
+}
+
+.notes-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(280px, 1fr));
+
+    gap: 20px;
+}
+
+.note-card {
+    padding: 22px;
+
+    background: white;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.note-card h3 {
+    margin: 0 0 10px;
+
+    font-size: 18px;
+    color: #111827;
+}
+
+.note-card p {
+    min-height: 60px;
+
+    color: #6b7280;
+
+    line-height: 1.6;
+}
+
+.note-actions {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 20px;
+}
+
+.note-actions button {
+    padding: 8px 14px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #2563eb;
+    color: white;
+
+    cursor: pointer;
+}
+
+.note-actions .delete-button {
+    background: #dc2626;
+}
+
+
+/* ================================
+   Pagination
+================================ */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 32px;
+    padding: 20px 0;
+}
+
+.pagination button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 100px;
+    height: 40px;
+
+    padding: 0 16px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: #374151;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #111827;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+    transform: translateY(-1px);
+}
+
+.pagination button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.pagination button:disabled {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+
+    cursor: not-allowed;
+}
+
+.pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 110px;
+    height: 40px;
+
+    padding: 0 14px;
+
+    border-radius: 8px;
+
+    background: #f3f4f6;
+    color: #374151;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+.note-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.note-image-wrapper {
+    width: 100%;
+    height: 180px;
+
+    overflow: hidden;
+
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+
+    background: #f3f4f6;
+}
+
+.note-image {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    border-radius: 12px;
+
+    transition: transform 0.4s ease;
+}
+
+.note-image-wrapper:hover .note-image {
+    transform: scale(1.08);
+}

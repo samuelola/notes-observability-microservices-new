@@ -22,15 +22,15 @@ class NoteRepository implements NoteRepositoryInterface
     public function allUserNotes(int $userId, int $page)
     {
         return Note::forUser($userId)
-            ->select(['id', 'user_id', 'title', 'content', 'image_path', 'created_at']) // avoid heavy content load
-            ->orderByDesc('created_at')
-            ->paginate(10);
+            ->select(['id', 'user_id', 'title', 'content', 'image_path', 'created_at']) 
+            ->latest('id')
+            ->paginate(5);
     }
 
     public function getByUser(int $userId)
     {
         return Note::where('user_id', $userId)
-            ->latest()
+            ->latest('id')
             ->paginate(10);
     }
 

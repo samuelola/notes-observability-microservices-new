@@ -1,0 +1,90 @@
+.dashboard-header {
+    min-height: 72px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 32px;
+
+    background: white;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+}
+
+.header-left h1 {
+    margin: 0;
+
+    font-size: 22px;
+
+    color: #111827;
+}
+
+.header-left p {
+    margin: 4px 0 0;
+
+    color: #6b7280;
+
+    font-size: 14px;
+}
+
+.header-actions {
+    color: #6b7280;
+}
+
+.mobile-menu-button {
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 40px;
+    height: 40px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    background: white;
+
+    cursor: pointer;
+}
+
+.mobile-menu-button:hover {
+    background: #f3f4f6;
+}
+
+.menu-button {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .menu-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 42px;
+        height: 42px;
+
+        border: none;
+        border-radius: 8px;
+
+        background: #111827;
+        color: white;
+
+        font-size: 22px;
+
+        cursor: pointer;
+    }
+
+    .menu-button:hover {
+        background: #1f2937;
+    }
+}

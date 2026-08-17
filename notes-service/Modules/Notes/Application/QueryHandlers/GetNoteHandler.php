@@ -17,18 +17,18 @@ class GetNoteHandler
 
     public function handle(GetNoteQuery $query)
     {
-        return Cache::remember(
-            "notes:user:{$query->userId}",
-            now()->addMinutes(10),
-            fn () => $this->repo->findForUser(
-                $query->id,
-                $query->userId
-            )
-        );
-
-        // return $this->repo->findForUser(
-        //     $query->id,
-        //     $query->userId
+        // return Cache::remember(
+        //     "notes:user:{$query->userId}",
+        //     now()->addMinutes(10),
+        //     fn () => $this->repo->findForUser(
+        //         $query->id,
+        //         $query->userId
+        //     )
         // );
+
+        return $this->repo->findForUser(
+            $query->id,
+            $query->userId
+        );
     }
 }

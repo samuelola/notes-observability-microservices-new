@@ -1,0 +1,203 @@
+.create-note-page {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.create-note-header {
+    margin-bottom: 24px;
+}
+
+.create-note-header h2 {
+    margin: 0 0 6px;
+
+    font-size: 26px;
+    font-weight: 600;
+
+    color: #111827;
+}
+
+.create-note-header p {
+    margin: 0;
+
+    color: #6b7280;
+}
+
+.create-note-card {
+    background: white;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    padding: 28px;
+
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    margin-bottom: 22px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+
+    color: #374151;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 12px 14px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    background: white;
+
+    color: #111827;
+
+    font-size: 15px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+
+    min-height: 180px;
+}
+
+.form-group input[type="file"] {
+    padding: 10px;
+
+    cursor: pointer;
+}
+
+.selected-image {
+    font-size: 13px;
+
+    color: #6b7280;
+}
+
+.create-note-error {
+    margin-bottom: 20px;
+
+    padding: 12px 14px;
+
+    border-radius: 8px;
+
+    background: #fef2f2;
+
+    border: 1px solid #fecaca;
+
+    color: #b91c1c;
+
+    font-size: 14px;
+}
+
+.create-note-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    padding-top: 8px;
+}
+
+.cancel-button,
+.create-note-button {
+    padding: 11px 18px;
+
+    border-radius: 8px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s,
+        opacity 0.2s;
+}
+
+.cancel-button {
+    border: 1px solid #d1d5db;
+
+    background: white;
+
+    color: #374151;
+}
+
+.cancel-button:hover {
+    background: #f9fafb;
+}
+
+.create-note-button {
+    border: none;
+
+    background: #2563eb;
+
+    color: white;
+}
+
+.create-note-button:hover {
+    background: #1d4ed8;
+}
+
+.cancel-button:disabled,
+.create-note-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+@media (max-width: 768px) {
+
+    .create-note-page {
+        max-width: 100%;
+    }
+
+    .create-note-card {
+        padding: 20px;
+
+        border-radius: 10px;
+    }
+
+    .create-note-header h2 {
+        font-size: 22px;
+    }
+
+    .create-note-actions {
+        flex-direction: column-reverse;
+    }
+
+    .cancel-button,
+    .create-note-button {
+        width: 100%;
+    }
+
+}

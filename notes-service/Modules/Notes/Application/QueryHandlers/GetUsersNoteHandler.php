@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Notes\Application\Queries\GetUserNotesQuery;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
+use Illuminate\Support\Facades\Storage;
 
 class GetUsersNoteHandler
 {
@@ -35,6 +36,12 @@ class GetUsersNoteHandler
                             'content' => $note->content,
                             'user_id' => $note->user_id,
                             'image_path' => $note->image_path,
+                            'image_url' => $note->image_path
+                            ? Storage::disk('s3')->temporaryUrl(
+                                $note->image_path,
+                                now()->addMinutes(10)
+                            )
+                            : null,
                             'created_at' => optional($note->created_at)->toDateTimeString(),
                             'updated_at' => optional($note->updated_at)->toDateTimeString(),
                         ];
