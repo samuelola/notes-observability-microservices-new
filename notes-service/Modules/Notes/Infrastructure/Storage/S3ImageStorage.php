@@ -23,9 +23,9 @@ class S3ImageStorage implements ImageStorageInterface
     }
 
     public function temporaryUrl(
-    string $path,
-    int $minutes = 10
-    ){
+        string $path,
+        int $minutes = 10
+    ) {
         return Storage::disk('s3')->temporaryUrl(
             $path,
             now()->addMinutes($minutes)

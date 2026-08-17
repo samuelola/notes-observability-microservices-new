@@ -4,7 +4,6 @@ namespace Modules\Notes\Presentation\Transformers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 use Modules\Notes\Application\Contracts\ImageStorageInterface;
 
 class NoteResource extends JsonResource
@@ -13,6 +12,7 @@ class NoteResource extends JsonResource
     {
 
         $imageStorage = app(ImageStorageInterface::class);
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,

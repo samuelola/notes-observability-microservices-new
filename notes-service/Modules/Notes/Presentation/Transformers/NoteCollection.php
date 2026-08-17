@@ -4,7 +4,6 @@ namespace Modules\Notes\Presentation\Transformers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Facades\Storage;
 use Modules\Notes\Application\Contracts\ImageStorageInterface;
 
 class NoteCollection extends ResourceCollection
@@ -17,6 +16,7 @@ class NoteCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         $imageStorage = app(ImageStorageInterface::class);
+
         return [
             'data' => $this->collection->map(fn ($note) => [
                 'id' => $note->id,
