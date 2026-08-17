@@ -56,13 +56,12 @@ it('creates a note successfully with an image', function () {
         )
         ->andReturn(
             'https://example.com/temporary/test-image.jpg'
-        );    
+        );
 
     $this->app->instance(
         ImageStorageInterface::class,
         $imageStorage
     );
-    
 
     /*
      * Mock event dispatcher
