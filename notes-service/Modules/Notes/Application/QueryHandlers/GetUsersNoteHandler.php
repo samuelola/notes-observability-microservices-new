@@ -3,10 +3,10 @@
 namespace Modules\Notes\Application\QueryHandlers;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Modules\Notes\Application\Queries\GetUserNotesQuery;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
-use Illuminate\Support\Facades\Storage;
 
 class GetUsersNoteHandler
 {
