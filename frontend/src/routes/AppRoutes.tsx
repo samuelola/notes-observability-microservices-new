@@ -4,7 +4,7 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import DashboardLayout from "../components/DashboardLayout";
 import NotesPage from "../pages/NotesPage";
-import WelcomePage from "../pages/welcomePage"
+import WelcomePage from "../pages/WelcomePage";
 import CreateNotePage from "../pages/CreateNotePage";
 import EditNotePage from "../pages/EditNotePage";
 
