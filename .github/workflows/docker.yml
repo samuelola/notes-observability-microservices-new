@@ -182,6 +182,18 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/gateway:latest
 
+      # --------------------------------------------------
+      # BUILD + PUSH FRONTEND
+      # --------------------------------------------------
+
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_USERNAME }}/notes-frontend:latest
 
   # ==================================================
   # DEPLOY TO EC2
