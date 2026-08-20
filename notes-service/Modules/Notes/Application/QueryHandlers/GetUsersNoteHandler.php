@@ -20,42 +20,41 @@ class GetUsersNoteHandler
     {
 
         $paginator = $this->repo->allUserNotes(
-                $query->userId,
-                $query->page
-            );
+            $query->userId,
+            $query->page
+        );
 
         return [
-                'items' => collect($paginator->items())
-                    ->map(function ($note) {
-                        return [
-                            'id' => $note->id,
-                            'title' => $note->title,
-                            'content' => $note->content,
-                            'user_id' => $note->user_id,
-                            'image_path' => $note->image_path,
-                            'image_url' => $note->image_path
-                            ? Storage::disk('s3')->temporaryUrl(
-                                $note->image_path,
-                                now()->addMinutes(10)
-                            )
-                            : null,
-                            'created_at' => optional($note->created_at)->toDateTimeString(),
-                            'updated_at' => optional($note->updated_at)->toDateTimeString(),
-                        ];
-                    })
-                    ->toArray(),
+            'items' => collect($paginator->items())
+                ->map(function ($note) {
+                    return [
+                        'id' => $note->id,
+                        'title' => $note->title,
+                        'content' => $note->content,
+                        'user_id' => $note->user_id,
+                        'image_path' => $note->image_path,
+                        'image_url' => $note->image_path
+                        ? Storage::disk('s3')->temporaryUrl(
+                            $note->image_path,
+                            now()->addMinutes(10)
+                        )
+                        : null,
+                        'created_at' => optional($note->created_at)->toDateTimeString(),
+                        'updated_at' => optional($note->updated_at)->toDateTimeString(),
+                    ];
+                })
+                ->toArray(),
 
-                'pagination' => [
-                    'current_page' => $paginator->currentPage(),
-                    'per_page' => $paginator->perPage(),
-                    'total' => $paginator->total(),
-                    'last_page' => $paginator->lastPage(),
-                    'from' => $paginator->firstItem(),
-                    'to' => $paginator->lastItem(),
-                    'has_more_pages' => $paginator->hasMorePages(),
-                ],
-            ];    
-
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+                'has_more_pages' => $paginator->hasMorePages(),
+            ],
+        ];
 
         // $cacheKey = "notes:user:{$query->userId}:page:{$query->page}";
 

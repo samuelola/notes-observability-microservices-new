@@ -33,20 +33,7 @@ services:
       - redis
     networks:
       - microservices
-
-  frontend:
-    build:
-      context: ./frontend
-    image: notes-frontend:local
-    container_name: notes-frontend
-    ports:
-      - "5173:5173"
-    working_dir: /var/www
-    command: npm run dev
-    depends_on:
-      - notes
-    networks:
-      - microservices    
+   
 
   mysql:
     image: mysql:8.0
