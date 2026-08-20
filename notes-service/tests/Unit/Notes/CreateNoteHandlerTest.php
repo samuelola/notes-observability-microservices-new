@@ -42,7 +42,7 @@ it('creates a note, clears the cache and dispatches an event', function () {
 
     $cache = Mockery::mock(CacheInterface::class);
 
-    $cache->shouldReceive('forget')
+    $cache->shouldReceive('tags')
         ->once()
         ->with('notes:user:10');
 
