@@ -7,6 +7,7 @@ import NotesPage from "../pages/NotesPage";
 import WelcomePage from "../pages/WelcomePage";
 import CreateNotePage from "../pages/CreateNotePage";
 import EditNotePage from "../pages/EditNotePage";
+import ProtectedRoute from "../protection/ProtectedRoute";
 
 
 export default function AppRoutes() {
@@ -19,6 +20,7 @@ export default function AppRoutes() {
                 />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route element={<ProtectedRoute />}>
                 <Route
                     path="/dashboard"
                     element={<DashboardLayout />}
@@ -44,6 +46,8 @@ export default function AppRoutes() {
                         path="notes/:id/edit"
                         element={<EditNotePage />}
                     />
+
+                    </Route>
 
                 </Route>
                 
