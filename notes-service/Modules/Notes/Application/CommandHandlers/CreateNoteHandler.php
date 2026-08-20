@@ -43,7 +43,11 @@ class CreateNoteHandler
             'image_path' => $imagePath,
         ]);
 
-        $this->cache->forget(
+        // $this->cache->forget(
+        //     "notes:user:{$command->userId}"
+        // );
+
+        $this->cache->tags(
             "notes:user:{$command->userId}"
         );
 

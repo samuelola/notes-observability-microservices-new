@@ -11,4 +11,9 @@ class LaravelCache implements CacheInterface
     {
         Cache::forget($key);
     }
+
+    public function tags(string $key): void
+    {
+        Cache::tags([$key])->flush();
+    }
 }
