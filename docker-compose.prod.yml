@@ -115,6 +115,7 @@ services:
     depends_on:
       - auth
       - notes
+      - frontend
     restart: unless-stopped
     networks:
       - microservices
