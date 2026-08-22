@@ -3,7 +3,9 @@ My current Architecture
 
 The architecture
 
-Your former stack
+Your former stack   
+                 
+                 For (Logging)
 
                          Client
                            │
@@ -22,18 +24,18 @@ Your former stack
 
 ────────────────────────────────────────────────────
 
-                  Promtail
+                  Promtail (get the logs)
                      │
                      ▼
-                    Loki
+                    Loki (stores the logs)
                      |
                      ▼
-                  Grafana
+                  Grafana (view the logs)
 
             
             
             
-            Your stack will become fter Prometheus:
+            Your stack will become fter Prometheus: ( Metrics )
 
 
                     Client

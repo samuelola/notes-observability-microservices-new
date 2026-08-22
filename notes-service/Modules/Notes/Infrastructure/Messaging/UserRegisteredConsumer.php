@@ -36,7 +36,7 @@ class UserRegisteredConsumer
                 Note::create([
                     'user_id' => $user['id'],
                     'title' => 'Welcome!',
-                    'content' => 'Thanks for joining. This is your first note.',
+                    'content' => 'Registration is successful',
                 ]);
             }
         );

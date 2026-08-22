@@ -155,7 +155,50 @@ services:
     expose:
       - "80"
     networks:
-      - microservices    
+      - microservices
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    expose:
+      - "3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - microservices
+
+  loki:
+    image: grafana/loki:3.7.0
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+    expose:
+      - "3100"
+    networks:
+      - microservices
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - "12345"
+    networks:
+      - microservices       
 
 networks:
   microservices:
@@ -163,3 +206,6 @@ networks:
 
 volumes:
   mysql-data:
+  grafana-data:
+  loki-data:
+  alloy-data:

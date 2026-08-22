@@ -1,0 +1,44 @@
+React
+  │
+  ▼
+Nginx Gateway
+  │
+  ├── Auth Service ─────┐
+  │                     │
+  └── Notes Service ────┤
+                        │
+RabbitMQ ───────────────┤
+Redis ──────────────────┤
+MySQL ──────────────────┤
+                        ▼
+                 Grafana Alloy
+                        │
+              ┌─────────┴─────────┐
+              ▼                   ▼
+             Loki             Prometheus
+              │                   │
+              └─────────┬─────────┘
+                        ▼
+                     Grafana
+
+Grafana Alloy : collect the logs and write it to loki
+Loki : store logs
+Grafana : visualizes 
+
+
+This follows the intended Alloy architecture:
+
+Docker
+  ↓
+discovery.docker
+  ↓
+discovery.relabel
+  ↓
+loki.source.docker
+  ↓
+loki.write
+  ↓
+Loki
+
+That's the same basic pattern documented by Grafana for monitoring Docker containers with Alloy.
+
