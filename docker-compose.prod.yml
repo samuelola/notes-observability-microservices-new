@@ -182,23 +182,39 @@ services:
     networks:
       - microservices
 
+  # alloy:
+  #   image: grafana/alloy:latest
+  #   container_name: alloy
+  #   restart: unless-stopped
+  #   command:
+  #     - run
+  #     - --server.http.listen-addr=0.0.0.0:12345
+  #     - --storage.path=/var/lib/alloy/data
+  #     - /etc/alloy/config.alloy
+  #   volumes:
+  #     - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+  #     - alloy-data:/var/lib/alloy/data
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   expose:
+  #     - "12345"
+  #   networks:
+  #     - microservices   
+
   alloy:
     image: grafana/alloy:latest
     container_name: alloy
     restart: unless-stopped
+    volumes:
+      - ./observability/alloy:/etc/alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     command:
       - run
       - --server.http.listen-addr=0.0.0.0:12345
-      - --storage.path=/var/lib/alloy/data
       - /etc/alloy/config.alloy
-    volumes:
-      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
-      - alloy-data:/var/lib/alloy/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
     expose:
-      - "12345"
+      - "123456"
     networks:
-      - microservices       
+      - microservices        
 
 networks:
   microservices:
