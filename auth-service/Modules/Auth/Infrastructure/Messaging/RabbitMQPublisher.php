@@ -2,22 +2,20 @@
 
 namespace Modules\Auth\Infrastructure\Messaging;
 
+use Illuminate\Support\Facades\Log;
+use Modules\Auth\Application\Contracts\EventPublisherInterface;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
-use Modules\Auth\Application\Contracts\EventPublisherInterface;
-use Illuminate\Support\Facades\Log;
 
 class RabbitMQPublisher implements EventPublisherInterface
 {
-
     public function publish(string $queue, array $payload): void
     {
-        
-        Log::info('Publishing to RabbitMQ', [
-        'queue' => $queue,
-        'payload' => $payload,
-        ]);
 
+        Log::info('Publishing to RabbitMQ', [
+            'queue' => $queue,
+            'payload' => $payload,
+        ]);
 
         $connection = new AMQPStreamConnection(
             config('rabbitmq.host'),
