@@ -8,7 +8,6 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class UserRegisteredConsumer
 {
-   
     public function consume(): void
     {
         $connection = new AMQPStreamConnection(
@@ -59,12 +58,9 @@ class UserRegisteredConsumer
 
                 try {
 
-                    
                     $user = json_decode($message->body, true);
 
                     Log::info('Registration is successful', $user);
-
-                    
 
                     // Acknowledge message
                     $message->delivery_info['channel']->basic_ack(
@@ -75,7 +71,7 @@ class UserRegisteredConsumer
 
                     Log::error('Failed processing note.created', [
                         'error' => $e->getMessage(),
-                        'message' => $message->body
+                        'message' => $message->body,
                     ]);
 
                     // You could reject/requeue here

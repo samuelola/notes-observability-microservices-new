@@ -3,8 +3,8 @@
 namespace Modules\Email\Infrastructure\Messaging;
 
 use Illuminate\Support\Facades\Log;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Modules\Email\Infrastructure\Persistence\Models\EmailUser;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class UserCreatedConsumer
 {
@@ -69,7 +69,7 @@ class UserCreatedConsumer
                     ]);
 
                     // THIS IS THE STEP YOU ASKED ABOUT
-                   $emailUserId = EmailUser::updateOrCreate(
+                    $emailUserId = EmailUser::updateOrCreate(
                         [
                             // Search for existing user
                             'user_id' => $data['id'],
@@ -81,10 +81,9 @@ class UserCreatedConsumer
                         ]
                     );
 
-
                     Log::info('UserCreatedConsumer user id confirmed', [
-                        'user_id' => $emailUserId->user_id
-                    ]); 
+                        'user_id' => $emailUserId->user_id,
+                    ]);
 
                     // Tell RabbitMQ processing succeeded
                     $message->delivery_info['channel']->basic_ack(
@@ -107,8 +106,6 @@ class UserCreatedConsumer
                 }
             }
         );
-
-        
 
         while ($channel->is_consuming()) {
             $channel->wait();

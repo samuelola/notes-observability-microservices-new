@@ -2,11 +2,11 @@
 
 namespace Modules\Email\Infrastructure\Messaging;
 
+use App\Mail\NoteCreatedMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Modules\Email\Infrastructure\Persistence\Models\EmailUser;
-use App\Mail\NoteCreatedMail;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class NoteCreatedConsumer
 {
@@ -70,14 +70,13 @@ class NoteCreatedConsumer
                         'data' => $data,
                     ]);
 
-                   
                     // Find the user from Email Service's local projection
                     $user = EmailUser::where(
                         'user_id',
                         $data['user_id']
                     )->first();
 
-                    if (!$user) {
+                    if (! $user) {
                         throw new \RuntimeException(
                             "Email user not found: {$data['user_id']}"
                         );
@@ -97,8 +96,8 @@ class NoteCreatedConsumer
                         );
 
                     Log::info('Note email queued', [
-                        'message' => 'user email confirmed and ready to send email'
-                    ]);    
+                        'message' => 'user email confirmed and ready to send email',
+                    ]);
 
                     // Log::info('Note email queued', [
                     //     'user_id' => $user->user_id,

@@ -8,7 +8,6 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class UserLoggedinConsumer
 {
-   
     public function consume(): void
     {
         $connection = new AMQPStreamConnection(
@@ -59,7 +58,7 @@ class UserLoggedinConsumer
 
                 try {
 
-                     $user = json_decode(
+                    $user = json_decode(
                         $message->body,
                         true,
                         512,
@@ -67,13 +66,11 @@ class UserLoggedinConsumer
                     );
 
                     Log::info('user.loggedin', [
-                    'service' => 'notes',
-                    'user_id' => $user['id'],
-                    'correlation_id' => $user['correlation_id'] ?? null,
-                    // 'note_msg' => $note->toArray(),
+                        'service' => 'notes',
+                        'user_id' => $user['id'],
+                        'correlation_id' => $user['correlation_id'] ?? null,
+                        // 'note_msg' => $note->toArray(),
                     ]);
-
-                    
 
                     // Acknowledge message
                     $message->delivery_info['channel']->basic_ack(

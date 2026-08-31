@@ -36,4 +36,3 @@ class NoteCreatedMail extends Mailable implements ShouldQueue
         return [];
     }
 }
-

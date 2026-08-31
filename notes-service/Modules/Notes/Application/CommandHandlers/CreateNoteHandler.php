@@ -2,16 +2,16 @@
 
 namespace Modules\Notes\Application\CommandHandlers;
 
+use Illuminate\Support\Facades\Log;
 use Modules\Notes\Application\Commands\CreateNoteCommand;
 use Modules\Notes\Application\Contracts\CacheInterface;
 use Modules\Notes\Application\Contracts\EventDispatcherInterface;
+use Modules\Notes\Application\Contracts\EventPublisherInterface;
 use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
 use Modules\Notes\Infrastructure\Queue\ProcessNoteAnalytics;
-use Modules\Notes\Application\Contracts\EventPublisherInterface;
-use Illuminate\Support\Facades\Log;
 
 class CreateNoteHandler
 {
@@ -28,7 +28,6 @@ class CreateNoteHandler
     public function handle(CreateNoteCommand $command)
     {
 
-       
         $imagePath = null;
 
         if ($command->image) {
@@ -42,7 +41,6 @@ class CreateNoteHandler
 
         }
 
-        
         $note = $this->repo->create([
             'title' => $command->title,
             'content' => $command->content,
@@ -50,7 +48,6 @@ class CreateNoteHandler
             'image_path' => $imagePath,
         ]);
 
-        
         $this->cache->tags(
             "notes:user:{$command->userId}"
         );
@@ -60,7 +57,6 @@ class CreateNoteHandler
         $this->events->dispatch(
             new NoteCreated($note->id)
         );
-
 
         // Integration event → RabbitMQ
         $this->publisher->publish(
