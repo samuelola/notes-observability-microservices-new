@@ -22,7 +22,7 @@ class LoginHandler
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'correlation_id' => $command->correlation_id
+            'correlation_id' => $command->correlation_id,
 
         ]);
 
