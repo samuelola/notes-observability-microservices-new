@@ -5,11 +5,11 @@ use Modules\Notes\Application\CommandHandlers\CreateNoteHandler;
 use Modules\Notes\Application\Commands\CreateNoteCommand;
 use Modules\Notes\Application\Contracts\CacheInterface;
 use Modules\Notes\Application\Contracts\EventDispatcherInterface;
+use Modules\Notes\Application\Contracts\EventPublisherInterface;
 use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
-use Modules\Notes\Application\Contracts\EventPublisherInterface;
 
 it('creates a note, clears the cache and dispatches an event', function () {
 
@@ -77,7 +77,7 @@ it('creates a note, clears the cache and dispatches an event', function () {
         ->with(
             'note.created',
             Mockery::type('array')
-        );    
+        );
 
     /*
      * IMPORTANT:
