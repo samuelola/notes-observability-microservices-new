@@ -14,13 +14,13 @@ class CreateNoteCommand
 
     public ?string $correlation_id = null;
 
-    public function __construct($title, $content, $userId, $image, $correlation_id)
+    public function __construct($title, $content, $userId, $image, $correlation_id=null)
     {
 
         $this->title = $title;
         $this->content = $content;
         $this->userId = $userId;
         $this->image = $image;
-        $this->correlation_id = correlation_id;
+        $this->correlation_id = $correlation_id;
     }
 }
