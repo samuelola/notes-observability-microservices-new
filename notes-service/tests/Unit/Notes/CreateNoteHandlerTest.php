@@ -97,6 +97,7 @@ it('creates a note, clears the cache and dispatches an event', function () {
         content: 'Hello world',
         userId: 10,
         image: $image,
+        correlation_id: 'test-correlation-id'
     );
 
     $result = $handler->handle($command);
