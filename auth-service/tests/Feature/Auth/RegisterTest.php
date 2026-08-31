@@ -12,7 +12,7 @@ it('registers a new user successfully', function () {
         ->shouldReceive('publish')
         ->once()
         ->with(
-            'user.registered',
+            'auth.registered',
             Mockery::type('array')
         );
     $this->app->instance(
