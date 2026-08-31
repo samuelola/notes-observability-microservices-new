@@ -26,7 +26,7 @@ it('logs in successfully', function () {
         ->shouldReceive('publish')
         ->once()
         ->with(
-            'user.loggedin',
+            'auth.loggedin',
             Mockery::type('array')
         );
 
