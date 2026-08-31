@@ -16,7 +16,8 @@ it('registers a new user successfully', function () {
     $command = new RegisterCommand(
         'John Doe',
         'john@example.com',
-        'password123'
+        'password123',
+        'test-correlation-id'
     );
 
     $repo = Mockery::mock(AuthRepositoryInterface::class);

@@ -28,7 +28,8 @@ class AuthController extends Controller
         $newdto = new RegisterCommand(
             $dto->name,
             $dto->email,
-            $dto->password
+            $dto->password,
+            $request->header('X-Correlation-ID')
         );
 
         $user = $handler->handle($newdto);
@@ -59,7 +60,8 @@ class AuthController extends Controller
 
         $newlogindto = new LoginCommand(
             $logindto->email,
-            $logindto->password
+            $logindto->password,
+            $request->header('X-Correlation-ID')
         );
 
         $user = $handler->handle($newlogindto);

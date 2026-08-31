@@ -22,7 +22,7 @@ class RegisterHandler
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'correlation_id' => request()->header('X-Correlation-ID') ?? null,
+            'correlation_id' => $command->correlation_id
         ]);
 
         return $user;

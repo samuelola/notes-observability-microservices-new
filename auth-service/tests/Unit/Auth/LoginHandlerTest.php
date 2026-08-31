@@ -38,7 +38,8 @@ it('logs in successfully', function () {
     $result = $handler->handle(
         new LoginCommand(
             'john@example.com',
-            'password'
+            'password',
+            'test-correlation-id'
         )
     );
 
