@@ -9,6 +9,7 @@ use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
+use Modules\Notes\Application\Contracts\EventPublisherInterface;
 
 it('creates a note, clears the cache and dispatches an event', function () {
 
@@ -68,6 +69,16 @@ it('creates a note, clears the cache and dispatches an event', function () {
         ->once()
         ->with(Mockery::type(NoteCreated::class));
 
+    $publisher = Mockery::mock(EventPublisherInterface::class);
+
+    $publisher
+        ->shouldReceive('publish')
+        ->once()
+        ->with(
+            'note.created',
+            Mockery::type('array')
+        );    
+
     /*
      * IMPORTANT:
      * ImageStorageInterface is now the 5th dependency.
@@ -77,7 +88,8 @@ it('creates a note, clears the cache and dispatches an event', function () {
         $authClient,
         $cache,
         $events,
-        $imageStorage
+        $imageStorage,
+        $publisher
     );
 
     $command = new CreateNoteCommand(

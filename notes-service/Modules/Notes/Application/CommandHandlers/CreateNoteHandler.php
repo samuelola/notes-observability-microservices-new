@@ -68,7 +68,7 @@ class CreateNoteHandler
                 'title' => $note->title,
                 'content' => $note->content,
                 'created_at' => $note->created_at,
-                'correlation_id' => request()->header('X-Correlation-ID'),
+                'correlation_id' => $command->correlation_id,
             ]
         );
 
