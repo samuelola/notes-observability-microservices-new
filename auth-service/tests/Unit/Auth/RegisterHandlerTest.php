@@ -39,6 +39,7 @@ it('registers a new user successfully', function () {
                 'id' => 1,
                 'name' => 'John Doe',
                 'email' => 'john@example.com',
+                'correlation_id' => 'test-correlation-id',
             ]
         );
 
