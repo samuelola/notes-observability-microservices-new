@@ -63,8 +63,7 @@ class NoteController extends Controller
         $dto = CreateNoteDTO::fromArray(
             $request->validated(),
             $user->id,
-            $request->file('image'),
-            $request->header('X-Correlation-ID')
+            $request->file('image')
         );
 
         // WRITE SIDE (COMMAND)  : splitting Noteservice
@@ -73,7 +72,7 @@ class NoteController extends Controller
             $dto->content,
             $dto->userId,
             $dto->image,
-            $dto->correlation_id
+            $request->header('X-Correlation-ID')
         );
 
         $note = $handler->handle($newdto);
