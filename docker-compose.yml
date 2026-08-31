@@ -33,7 +33,38 @@ services:
       - redis
     networks:
       - microservices
-   
+
+  email: 
+    build: 
+      context: ./email-service 
+    image: email-service:local 
+    container_name: email-service 
+    ports: 
+      - "8002:8002" 
+    volumes: 
+      - ./email-service:/var/www 
+    working_dir: /var/www 
+    command: php artisan serve --host=0.0.0.0 --port=8002 
+    depends_on: 
+      - mysql 
+      - rabbitmq 
+      - redis 
+    networks: 
+      - microservices 
+
+  frontend:
+    build:
+      context: ./frontend 
+    image: frontend:local
+    container_name: frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/var/www
+    working_dir: /var/www
+    networks:
+      - microservices   
+
 
   mysql:
     image: mysql:8.0
@@ -94,6 +125,46 @@ services:
     networks:
       - microservices
 
+  email-user-consumer: 
+    image: email-service:local 
+    container_name: email-user-consumer 
+    working_dir: /var/www 
+    command: php artisan rabbitmq:consume-user-created
+    depends_on: 
+      - email 
+      - mysql 
+      - rabbitmq 
+    restart: unless-stopped 
+    volumes: 
+      - ./email-service:/var/www 
+    networks: 
+      - microservices
+
+  email-note-consumer: 
+    image: email-service:local 
+    container_name: email-note-consumer 
+    working_dir: /var/www 
+    command: php artisan rabbitmq:consume-note-created 
+    depends_on: 
+      - email 
+      - mysql 
+      - rabbitmq 
+      - redis 
+    restart: unless-stopped 
+    volumes: 
+      - ./email-service:/var/www 
+    networks: 
+      - microservices  
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - microservices       
+
   notes-worker:
     image: notes-service:local
     container_name: notes-worker
@@ -108,6 +179,25 @@ services:
     networks:
       - microservices
 
+  email-worker: 
+    image: email-service:local 
+    container_name: email-worker 
+    working_dir: /var/www 
+    command: php artisan queue:work redis --tries=3 --timeout=120 
+    restart: unless-stopped 
+    volumes: 
+      - ./email-service:/var/www 
+    depends_on: 
+      - email 
+      - mysql 
+      - redis 
+    networks: 
+      - microservices       
+  
+  # =========================================================
+  # API GATEWAY 
+  # =========================================================
+
   gateway:
     build:
       context: ./gateway
@@ -120,32 +210,7 @@ services:
     networks:
       - microservices
 
-  nginx-exporter:
-    image: nginx/nginx-prometheus-exporter:1.5.1
-    container_name: nginx-exporter
-    command:
-      - -nginx.scrape-uri=http://api-gateway/nginx_status
-    ports:
-      - "9113:9113"
-    depends_on:
-      - gateway
-    networks:
-      - microservices
-
-  rabbitmq-exporter:
-    image: kbudde/rabbitmq-exporter
-    environment:
-      RABBIT_URL: http://rabbitmq:15672
-      RABBIT_USER: guest
-      RABBIT_PASSWORD: guest
-    ports:
-      - "9419:9419"
-    depends_on:
-      - rabbitmq
-    networks:
-      - microservices           
-
-
+  
 networks:
   microservices:
     driver: bridge

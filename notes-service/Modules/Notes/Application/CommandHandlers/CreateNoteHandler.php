@@ -10,6 +10,8 @@ use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
 use Modules\Notes\Domain\Repositories\NoteRepositoryInterface;
 use Modules\Notes\Infrastructure\Queue\ProcessNoteAnalytics;
+use Modules\Notes\Application\Contracts\EventPublisherInterface;
+use Illuminate\Support\Facades\Log;
 
 class CreateNoteHandler
 {
@@ -19,15 +21,19 @@ class CreateNoteHandler
         private CacheInterface $cache,
         private EventDispatcherInterface $events,
         private ImageStorageInterface $imageStorage,
+        private EventPublisherInterface $publisher,
 
     ) {}
 
     public function handle(CreateNoteCommand $command)
     {
 
+       
         $imagePath = null;
 
         if ($command->image) {
+
+            Log::info('STEP 1: Storing image');
 
             $imagePath = $this->imageStorage->store(
                 $command->image,
@@ -36,6 +42,7 @@ class CreateNoteHandler
 
         }
 
+        
         $note = $this->repo->create([
             'title' => $command->title,
             'content' => $command->content,
@@ -43,17 +50,30 @@ class CreateNoteHandler
             'image_path' => $imagePath,
         ]);
 
-        // $this->cache->forget(
-        //     "notes:user:{$command->userId}"
-        // );
-
+        
         $this->cache->tags(
             "notes:user:{$command->userId}"
         );
 
-        // this event uses listener
+        // this event uses listener : Internal domain event
+
         $this->events->dispatch(
             new NoteCreated($note->id)
+        );
+
+
+        // Integration event → RabbitMQ
+        $this->publisher->publish(
+            'note.created',
+            [
+                'event' => 'note.created',
+                'note_id' => $note->id,
+                'user_id' => $note->user_id,
+                'title' => $note->title,
+                'content' => $note->content,
+                'created_at' => $note->created_at,
+                'correlation_id' => request()->header('X-Correlation-ID'),
+            ]
         );
 
         // ProcessNoteAnalytics::dispatch($note->id);

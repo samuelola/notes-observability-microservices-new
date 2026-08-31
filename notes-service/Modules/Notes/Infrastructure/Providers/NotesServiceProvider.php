@@ -21,6 +21,8 @@ use Modules\Notes\Presentation\Http\Middleware\AuthenticateWithAuthService;
 use Modules\Notes\Presentation\Http\Middleware\CheckUserInactivity;
 use Modules\Notes\Presentation\Http\Middleware\CorrelationIdMiddleware;
 use Modules\Notes\Presentation\Http\Middleware\TraceMiddleware;
+use Modules\Notes\Application\Contracts\EventPublisherInterface;
+use Modules\Notes\Infrastructure\Messaging\RabbitMQPublisher;
 
 class NotesServiceProvider extends ServiceProvider
 {
@@ -32,6 +34,7 @@ class NotesServiceProvider extends ServiceProvider
         $this->app->bind(NoteRepositoryInterface::class, NoteRepository::class);
         $this->app->bind(NoteServiceInterface::class, NoteService::class);
         $this->app->bind(AuthClientInterface::class, HttpAuthClient::class);
+        $this->app->bind(EventPublisherInterface::class, RabbitMQPublisher::class);
         $this->app->singleton(
             OpenTelemetryTracer::class,
             fn () => new OpenTelemetryTracer

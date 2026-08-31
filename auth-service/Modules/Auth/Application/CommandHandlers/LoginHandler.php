@@ -17,11 +17,12 @@ class LoginHandler
     {
 
         $user = $this->repo->loginUser($command);
-        $this->publisher->publish('user.loggedin', [
+        $this->publisher->publish('auth.loggedin', [
 
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'correlation_id' => request()->header('X-Correlation-ID') ?? null,
 
         ]);
 

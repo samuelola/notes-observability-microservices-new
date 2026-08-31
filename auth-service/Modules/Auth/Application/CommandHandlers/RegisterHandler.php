@@ -17,12 +17,12 @@ class RegisterHandler
     public function handle(RegisterCommand $command)
     {
         $user = $this->repo->createUser($command);
-        $this->publisher->publish('user.registered', [
+        $this->publisher->publish('auth.registered', [
 
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-
+            'correlation_id' => request()->header('X-Correlation-ID') ?? null,
         ]);
 
         return $user;

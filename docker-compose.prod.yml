@@ -32,6 +32,23 @@ services:
     networks:
       - microservices
 
+  email:
+    image: sammy48/email-service:latest
+    container_name: email-service
+    env_file:
+      - ./email-service/.env
+    working_dir: /var/www
+    command: php artisan serve --host=0.0.0.0 --port=8002
+    expose:
+      - "8002"
+    depends_on:
+      - mysql
+      - rabbitmq
+      - redis
+    restart: unless-stopped
+    networks:
+      - microservices    
+
   mysql:
     image: mysql:8.0
     container_name: mysql
@@ -93,6 +110,49 @@ services:
     networks:
       - microservices
 
+
+  email-user-consumer: 
+    image: sammy48/email-service:latest 
+    container_name: email-user-consumer 
+    working_dir: /var/www 
+    command: php artisan rabbitmq:consume-user-created
+    env_file:
+      - ./email-service/.env
+    depends_on: 
+      - email
+      - mysql 
+      - rabbitmq 
+    restart: unless-stopped  
+    networks: 
+      - microservices
+
+
+  email-note-consumer: 
+    image: sammy48/email-service:latest 
+    container_name: email-note-consumer 
+    working_dir: /var/www 
+    command: php artisan rabbitmq:consume-note-created 
+    env_file:
+      - ./email-service/.env
+    depends_on: 
+      - email 
+      - mysql 
+      - rabbitmq 
+      - redis 
+    restart: unless-stopped 
+    networks: 
+      - microservices
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - microservices       
+
+
   notes-worker:
     image: sammy48/notes-service:latest
     container_name: notes-worker
@@ -106,6 +166,24 @@ services:
     restart: unless-stopped
     networks:
       - microservices
+
+
+  email-worker: 
+    image: sammy48/email-service:latest 
+    container_name: email-worker 
+    working_dir: /var/www 
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=90 
+    env_file:
+      - ./email-service/.env
+    restart: unless-stopped 
+    depends_on: 
+      - email 
+      - mysql 
+      - redis 
+    networks: 
+      - microservices   
+
+      
 
   gateway:
     image: sammy48/gateway:latest
@@ -161,8 +239,8 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
     depends_on:
@@ -181,24 +259,7 @@ services:
       - "3100"
     networks:
       - microservices
-
-  # alloy:
-  #   image: grafana/alloy:latest
-  #   container_name: alloy
-  #   restart: unless-stopped
-  #   command:
-  #     - run
-  #     - --server.http.listen-addr=0.0.0.0:12345
-  #     - --storage.path=/var/lib/alloy/data
-  #     - /etc/alloy/config.alloy
-  #   volumes:
-  #     - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
-  #     - alloy-data:/var/lib/alloy/data
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #   expose:
-  #     - "12345"
-  #   networks:
-  #     - microservices   
+   
 
   alloy:
     image: grafana/alloy:latest
@@ -209,10 +270,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command:
       - run
-      - --server.http.listen-addr=0.0.0.0:12345
       - /etc/alloy/config.alloy
-    expose:
-      - "123456"
     networks:
       - microservices        
 

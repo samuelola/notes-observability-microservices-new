@@ -9,14 +9,10 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitMQPublisher implements EventPublisherInterface
 {
-    public function publish(string $queue, array $payload): void
-    {
-
-        Log::info('Publishing to RabbitMQ', [
-            'queue' => $queue,
-            'payload' => $payload,
-        ]);
-
+    public function publish(
+        string $eventName,
+        array $payload
+    ): void {
         $connection = new AMQPStreamConnection(
             config('rabbitmq.host'),
             config('rabbitmq.port'),
@@ -26,13 +22,34 @@ class RabbitMQPublisher implements EventPublisherInterface
 
         $channel = $connection->channel();
 
-        $channel->queue_declare($queue, false, true, false, false);
+        $exchange = 'app.events';
 
-        $message = new AMQPMessage(json_encode($payload));
+        $channel->exchange_declare(
+            $exchange,
+            'topic',
+            false,
+            true,
+            false
+        );
 
-        $channel->basic_publish($message, '', $queue);
+        $message = new AMQPMessage(
+            json_encode($payload),
+            [
+                'content_type' => 'application/json',
+                'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
+            ]
+        );
 
-        Log::info('Message published successfully');
+        $channel->basic_publish(
+            $message,
+            $exchange,
+            $eventName
+        );
+
+        Log::info('Event published', [
+            'event' => $eventName,
+            'payload' => $payload,
+        ]);
 
         $channel->close();
         $connection->close();
