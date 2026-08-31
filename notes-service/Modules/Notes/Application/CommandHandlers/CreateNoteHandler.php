@@ -2,7 +2,6 @@
 
 namespace Modules\Notes\Application\CommandHandlers;
 
-use Illuminate\Support\Facades\Log;
 use Modules\Notes\Application\Commands\CreateNoteCommand;
 use Modules\Notes\Application\Contracts\CacheInterface;
 use Modules\Notes\Application\Contracts\EventDispatcherInterface;
@@ -31,8 +30,6 @@ class CreateNoteHandler
         $imagePath = null;
 
         if ($command->image) {
-
-            Log::info('STEP 1: Storing image');
 
             $imagePath = $this->imageStorage->store(
                 $command->image,

@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Modules\Notes\Application\Contracts\EventDispatcherInterface;
+use Modules\Notes\Application\Contracts\EventPublisherInterface;
 use Modules\Notes\Application\Contracts\ImageStorageInterface;
 use Modules\Notes\Domain\Contracts\AuthClientInterface;
 use Modules\Notes\Domain\Events\NoteCreated;
@@ -64,7 +65,7 @@ it('creates a note successfully with an image', function () {
     );
 
     /*
-     * Mock event dispatcher
+     * Mock internal domain event
      */
     $events = Mockery::mock(EventDispatcherInterface::class);
 
@@ -85,6 +86,25 @@ it('creates a note successfully with an image', function () {
         'test-image.jpg',
         500,
         500
+    );
+
+    /*
+     * Mock RabbitMQ publisher
+     */
+
+    $publisher = Mockery::mock(EventPublisherInterface::class);
+
+    $publisher
+        ->shouldReceive('publish')
+        ->once()
+        ->with(
+            'note.created',
+            Mockery::type('array')
+        );
+
+    $this->app->instance(
+        EventPublisherInterface::class,
+        $publisher
     );
 
     /*
