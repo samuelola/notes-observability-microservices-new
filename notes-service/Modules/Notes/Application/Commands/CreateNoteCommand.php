@@ -14,7 +14,7 @@ class CreateNoteCommand
 
     public ?string $correlation_id = null;
 
-    public function __construct($title, $content, $userId, $image, $correlation_id=null)
+    public function __construct($title, $content, $userId, $image, $correlation_id = null)
     {
 
         $this->title = $title;
