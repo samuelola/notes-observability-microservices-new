@@ -7,7 +7,7 @@ class LoginCommand
     public function __construct(
         public string $email,
         public string $password,
-        public ?string $correlationId = null,
+        public ?string $correlation_id = null,
     ) {}
 
 }
