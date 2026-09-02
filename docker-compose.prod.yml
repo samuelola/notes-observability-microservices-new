@@ -47,7 +47,7 @@ services:
       - redis
     restart: unless-stopped
     networks:
-      - microservices    
+      - microservices
 
   mysql:
     image: mysql:8.0
@@ -64,12 +64,22 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     restart: unless-stopped
+
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+
     expose:
       - "5672"
       - "15672"
+
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
     networks:
       - microservices
 
@@ -90,8 +100,10 @@ services:
     env_file:
       - ./notes-service/.env
     depends_on:
-      - rabbitmq
-      - mysql
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_started
     restart: unless-stopped
     networks:
       - microservices
@@ -104,43 +116,50 @@ services:
     env_file:
       - ./notes-service/.env
     depends_on:
-      - rabbitmq
-      - mysql
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_started
     restart: unless-stopped
     networks:
       - microservices
 
-
-  email-user-consumer: 
-    image: sammy48/email-service:latest 
-    container_name: email-user-consumer 
-    working_dir: /var/www 
+  email-user-consumer:
+    image: sammy48/email-service:latest
+    container_name: email-user-consumer
+    working_dir: /var/www
     command: php artisan rabbitmq:consume-user-created
     env_file:
       - ./email-service/.env
-    depends_on: 
-      - email
-      - mysql 
-      - rabbitmq 
-    restart: unless-stopped  
-    networks: 
+    depends_on:
+      email:
+        condition: service_started
+      mysql:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
       - microservices
 
-
-  email-note-consumer: 
-    image: sammy48/email-service:latest 
-    container_name: email-note-consumer 
-    working_dir: /var/www 
-    command: php artisan rabbitmq:consume-note-created 
+  email-note-consumer:
+    image: sammy48/email-service:latest
+    container_name: email-note-consumer
+    working_dir: /var/www
+    command: php artisan rabbitmq:consume-note-created
     env_file:
       - ./email-service/.env
-    depends_on: 
-      - email 
-      - mysql 
-      - rabbitmq 
-      - redis 
-    restart: unless-stopped 
-    networks: 
+    depends_on:
+      email:
+        condition: service_started
+      mysql:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
       - microservices
 
   mailpit:
@@ -150,8 +169,7 @@ services:
       - "8025:8025"
       - "1025:1025"
     networks:
-      - microservices       
-
+      - microservices
 
   notes-worker:
     image: sammy48/notes-service:latest
@@ -161,29 +179,31 @@ services:
     env_file:
       - ./notes-service/.env
     depends_on:
-      - redis
-      - mysql
+      redis:
+        condition: service_started
+      mysql:
+        condition: service_started
     restart: unless-stopped
     networks:
       - microservices
 
-
-  email-worker: 
-    image: sammy48/email-service:latest 
-    container_name: email-worker 
-    working_dir: /var/www 
-    command: php artisan queue:work redis --queue=default --tries=3 --timeout=90 
+  email-worker:
+    image: sammy48/email-service:latest
+    container_name: email-worker
+    working_dir: /var/www
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=90
     env_file:
       - ./email-service/.env
-    restart: unless-stopped 
-    depends_on: 
-      - email 
-      - mysql 
-      - redis 
-    networks: 
-      - microservices   
-
-      
+    restart: unless-stopped
+    depends_on:
+      email:
+        condition: service_started
+      mysql:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - microservices
 
   gateway:
     image: sammy48/gateway:latest
@@ -221,7 +241,8 @@ services:
     expose:
       - "9419"
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -259,7 +280,6 @@ services:
       - "3100"
     networks:
       - microservices
-   
 
   alloy:
     image: grafana/alloy:latest
@@ -272,7 +292,7 @@ services:
       - run
       - /etc/alloy/config.alloy
     networks:
-      - microservices        
+      - microservices
 
 networks:
   microservices:

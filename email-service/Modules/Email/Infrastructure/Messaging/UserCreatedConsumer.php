@@ -10,12 +10,40 @@ class UserCreatedConsumer
 {
     public function consume(): void
     {
-        $connection = new AMQPStreamConnection(
-            config('rabbitmq.host'),
-            config('rabbitmq.port'),
-            config('rabbitmq.user'),
-            config('rabbitmq.password')
-        );
+        /*
+         * Keep trying to connect to RabbitMQ.
+         *
+         * This protects the consumer from:
+         * - RabbitMQ starting slowly
+         * - RabbitMQ being temporarily unavailable
+         * - RabbitMQ being restarted
+         */
+        while (true) {
+            try {
+                Log::info('Connecting to RabbitMQ...', [
+                    'host' => config('rabbitmq.host'),
+                    'port' => config('rabbitmq.port'),
+                ]);
+
+                $connection = new AMQPStreamConnection(
+                    config('rabbitmq.host'),
+                    config('rabbitmq.port'),
+                    config('rabbitmq.user'),
+                    config('rabbitmq.password')
+                );
+
+                Log::info('RabbitMQ connection established');
+
+                break;
+
+            } catch (\Throwable $e) {
+                Log::warning('RabbitMQ connection failed. Retrying in 5 seconds...', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                sleep(5);
+            }
+        }
 
         $channel = $connection->channel();
 
@@ -57,33 +85,39 @@ class UserCreatedConsumer
             function ($message) {
 
                 try {
-
                     // Convert RabbitMQ JSON → PHP array
                     $data = json_decode(
                         $message->body,
                         true
                     );
 
+                    if (! is_array($data)) {
+                        throw new \RuntimeException(
+                            'Invalid RabbitMQ message payload'
+                        );
+                    }
+
                     Log::info('auth.loggedin received', [
                         'data' => $data,
                     ]);
 
-                    // THIS IS THE STEP YOU ASKED ABOUT
-                    $emailUserId = EmailUser::updateOrCreate(
+                    // Create or update the user projection
+                    $emailUser = EmailUser::updateOrCreate(
                         [
-                            // Search for existing user
                             'user_id' => $data['id'],
                         ],
                         [
-                            // Create or update these fields
                             'name' => $data['name'],
                             'email' => $data['email'],
                         ]
                     );
 
-                    Log::info('UserCreatedConsumer user id confirmed', [
-                        'user_id' => $emailUserId->user_id,
-                    ]);
+                    Log::info(
+                        'UserCreatedConsumer user id confirmed',
+                        [
+                            'user_id' => $emailUser->user_id,
+                        ]
+                    );
 
                     // Tell RabbitMQ processing succeeded
                     $message->delivery_info['channel']->basic_ack(
@@ -92,12 +126,19 @@ class UserCreatedConsumer
 
                 } catch (\Throwable $e) {
 
-                    Log::error('Failed processing email.user.created', [
-                        'error' => $e->getMessage(),
-                        'message' => $message->body,
-                    ]);
+                    Log::error(
+                        'Failed processing email.user.created',
+                        [
+                            'error' => $e->getMessage(),
+                            'message' => $message->body,
+                        ]
+                    );
 
-                    // Message processing failed
+                    /*
+                     * Reject the message without requeueing.
+                     *
+                     * This preserves your existing behavior.
+                     */
                     $message->delivery_info['channel']->basic_nack(
                         $message->delivery_info['delivery_tag'],
                         false,
@@ -106,6 +147,12 @@ class UserCreatedConsumer
                 }
             }
         );
+
+        Log::info('UserCreatedConsumer started', [
+            'queue' => $queue,
+            'exchange' => $exchange,
+            'routing_key' => 'auth.loggedin',
+        ]);
 
         while ($channel->is_consuming()) {
             $channel->wait();
