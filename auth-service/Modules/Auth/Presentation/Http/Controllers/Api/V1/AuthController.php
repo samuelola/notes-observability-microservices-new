@@ -34,7 +34,7 @@ class AuthController extends Controller
 
         $user = $handler->handle($newdto);
 
-        Log::info('user.registered', [
+        Log::info('auth.regisiter.success', [
             'service' => 'auth',
             'user_id' => $user->id,
             'email' => $user->email,
@@ -68,7 +68,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('notes-token')->plainTextToken;
 
-        Log::info('user.loggedin', [
+        Log::info('auth.login.success', [
             'service' => 'auth',
             'user_id' => $user->id,
             'email' => $user->email,
