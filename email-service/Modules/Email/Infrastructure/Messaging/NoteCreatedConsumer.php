@@ -12,12 +12,43 @@ class NoteCreatedConsumer
 {
     public function consume(): void
     {
-        $connection = new AMQPStreamConnection(
-            config('rabbitmq.host'),
-            config('rabbitmq.port'),
-            config('rabbitmq.user'),
-            config('rabbitmq.password')
-        );
+        /*
+         * Keep trying to connect to RabbitMQ.
+         *
+         * This protects the consumer when:
+         * - RabbitMQ is still starting
+         * - RabbitMQ is temporarily unavailable
+         * - RabbitMQ is restarted
+         */
+        while (true) {
+            try {
+                Log::info('Connecting to RabbitMQ...', [
+                    'host' => config('rabbitmq.host'),
+                    'port' => config('rabbitmq.port'),
+                ]);
+
+                $connection = new AMQPStreamConnection(
+                    config('rabbitmq.host'),
+                    config('rabbitmq.port'),
+                    config('rabbitmq.user'),
+                    config('rabbitmq.password')
+                );
+
+                Log::info('RabbitMQ connection established');
+
+                break;
+
+            } catch (\Throwable $e) {
+                Log::warning(
+                    'RabbitMQ connection failed. Retrying in 5 seconds...',
+                    [
+                        'error' => $e->getMessage(),
+                    ]
+                );
+
+                sleep(5);
+            }
+        }
 
         $channel = $connection->channel();
 
@@ -59,11 +90,16 @@ class NoteCreatedConsumer
             function ($message) {
 
                 try {
-
                     $data = json_decode(
                         $message->body,
                         true
                     );
+
+                    if (! is_array($data)) {
+                        throw new \RuntimeException(
+                            'Invalid RabbitMQ message payload'
+                        );
+                    }
 
                     Log::info('note.created received', [
                         'service' => 'email',
@@ -96,15 +132,11 @@ class NoteCreatedConsumer
                         );
 
                     Log::info('Note email queued', [
+                        'user_id' => $user->user_id,
+                        'email' => $user->email,
+                        'note_id' => $data['note_id'] ?? null,
                         'message' => 'user email confirmed and ready to send email',
                     ]);
-
-                    // Log::info('Note email queued', [
-                    //     'user_id' => $user->user_id,
-                    //     'email' => $user->email,
-                    //     'note_id' => $data['note_id'] ?? null,
-                    //     'message' => 'user email confirmed and ready to send email'
-                    // ]);
 
                     // Tell RabbitMQ we successfully processed the event
                     $message->delivery_info['channel']->basic_ack(
@@ -118,7 +150,11 @@ class NoteCreatedConsumer
                         'message' => $message->body,
                     ]);
 
-                    // Requeue the message
+                    /*
+                     * Reject the message without requeueing.
+                     *
+                     * This preserves your existing behavior.
+                     */
                     $message->delivery_info['channel']->basic_nack(
                         $message->delivery_info['delivery_tag'],
                         false,
@@ -128,7 +164,11 @@ class NoteCreatedConsumer
             }
         );
 
-        Log::info('NoteCreatedConsumer started');
+        Log::info('NoteCreatedConsumer started', [
+            'queue' => $queue,
+            'exchange' => $exchange,
+            'routing_key' => 'note.created',
+        ]);
 
         while ($channel->is_consuming()) {
             $channel->wait();

@@ -3,19 +3,49 @@
 namespace Modules\Notes\Infrastructure\Messaging;
 
 use Illuminate\Support\Facades\Log;
-use Modules\Notes\Infrastructure\Persistence\Models\Note;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class UserRegisteredConsumer
 {
     public function consume(): void
     {
-        $connection = new AMQPStreamConnection(
-            config('rabbitmq.host'),
-            config('rabbitmq.port'),
-            config('rabbitmq.user'),
-            config('rabbitmq.password')
-        );
+        /*
+         * Keep trying to connect to RabbitMQ.
+         *
+         * This protects the consumer when:
+         * - RabbitMQ is still starting
+         * - RabbitMQ is temporarily unavailable
+         * - RabbitMQ is restarted
+         */
+        while (true) {
+            try {
+                Log::info('Connecting to RabbitMQ...', [
+                    'host' => config('rabbitmq.host'),
+                    'port' => config('rabbitmq.port'),
+                ]);
+
+                $connection = new AMQPStreamConnection(
+                    config('rabbitmq.host'),
+                    config('rabbitmq.port'),
+                    config('rabbitmq.user'),
+                    config('rabbitmq.password')
+                );
+
+                Log::info('RabbitMQ connection established');
+
+                break;
+
+            } catch (\Throwable $e) {
+                Log::warning(
+                    'RabbitMQ connection failed. Retrying in 5 seconds...',
+                    [
+                        'error' => $e->getMessage(),
+                    ]
+                );
+
+                sleep(5);
+            }
+        }
 
         $channel = $connection->channel();
 
@@ -31,7 +61,7 @@ class UserRegisteredConsumer
             false
         );
 
-        // Declare Email Service queue
+        // Declare queue
         $channel->queue_declare(
             $queue,
             false,
@@ -40,7 +70,7 @@ class UserRegisteredConsumer
             false
         );
 
-        // Bind queue to note.created
+        // Bind queue to auth.registered
         $channel->queue_bind(
             $queue,
             $exchange,
@@ -57,10 +87,16 @@ class UserRegisteredConsumer
             function ($message) {
 
                 try {
+                    $user = json_decode(
+                        $message->body,
+                        true,
+                        512,
+                        JSON_THROW_ON_ERROR
+                    );
 
-                    $user = json_decode($message->body, true);
-
-                    Log::info('Registration is successful', $user);
+                    Log::info('Registration is successful', [
+                        'user' => $user,
+                    ]);
 
                     // Acknowledge message
                     $message->delivery_info['channel']->basic_ack(
@@ -69,12 +105,16 @@ class UserRegisteredConsumer
 
                 } catch (\Throwable $e) {
 
-                    Log::error('Failed processing note.created', [
+                    Log::error('Failed processing auth.registered', [
                         'error' => $e->getMessage(),
                         'message' => $message->body,
                     ]);
 
-                    // You could reject/requeue here
+                    /*
+                     * Reject the message without requeueing.
+                     *
+                     * This preserves your existing behavior.
+                     */
                     $message->delivery_info['channel']->basic_nack(
                         $message->delivery_info['delivery_tag'],
                         false,
@@ -83,6 +123,12 @@ class UserRegisteredConsumer
                 }
             }
         );
+
+        Log::info('UserRegisteredConsumer started', [
+            'queue' => $queue,
+            'exchange' => $exchange,
+            'routing_key' => 'auth.registered',
+        ]);
 
         while ($channel->is_consuming()) {
             $channel->wait();
