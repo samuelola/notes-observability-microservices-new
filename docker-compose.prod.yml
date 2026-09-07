@@ -10,7 +10,12 @@ services:
     expose:
       - "8000"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -25,9 +30,12 @@ services:
     expose:
       - "8001"
     depends_on:
-      - mysql
-      - rabbitmq
-      - redis
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -42,9 +50,12 @@ services:
     expose:
       - "8002"
     depends_on:
-      - mysql
-      - rabbitmq
-      - redis
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -55,37 +66,82 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-p${MYSQL_ROOT_PASSWORD}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s  
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
       - microservices
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      mysql:
+        condition: service_healthy 
+    networks:
+      - microservices
+
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - microservices  
+
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     restart: unless-stopped
-
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-
     expose:
       - "5672"
       - "15672"
-
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
-
     networks:
       - microservices
 
   redis:
     image: redis:7-alpine
     container_name: redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     restart: unless-stopped
     expose:
       - "6379"
@@ -103,7 +159,7 @@ services:
       rabbitmq:
         condition: service_healthy
       mysql:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -119,7 +175,7 @@ services:
       rabbitmq:
         condition: service_healthy
       mysql:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -135,7 +191,7 @@ services:
       email:
         condition: service_started
       mysql:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
@@ -153,11 +209,11 @@ services:
       email:
         condition: service_started
       mysql:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -175,14 +231,24 @@ services:
     image: sammy48/notes-service:latest
     container_name: notes-worker
     working_dir: /var/www
-    command: php artisan queue:work redis --queue=default --tries=3 --timeout=90
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=60
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php artisan queue:monitor redis:default || exit 1"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     env_file:
       - ./notes-service/.env
     depends_on:
       redis:
-        condition: service_started
+        condition: service_healthy
       mysql:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - microservices
@@ -191,7 +257,17 @@ services:
     image: sammy48/email-service:latest
     container_name: email-worker
     working_dir: /var/www
-    command: php artisan queue:work redis --queue=default --tries=3 --timeout=90
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=60
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php artisan queue:monitor redis:default || exit 1"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     env_file:
       - ./email-service/.env
     restart: unless-stopped
@@ -199,9 +275,9 @@ services:
       email:
         condition: service_started
       mysql:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     networks:
       - microservices
 
@@ -303,3 +379,4 @@ volumes:
   grafana-data:
   loki-data:
   alloy-data:
+  redisinsight_data:

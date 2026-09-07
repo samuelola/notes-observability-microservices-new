@@ -36,6 +36,7 @@ return new class extends Migration
                ORDER BY created_at DESC;
             */
             $table->index(['user_id', 'created_at']);
+            $table->index('created_at');
 
         });
     }

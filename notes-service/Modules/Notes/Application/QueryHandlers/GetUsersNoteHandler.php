@@ -29,7 +29,7 @@ class GetUsersNoteHandler
 
                 $paginator = $this->repo->allUserNotes(
                     $query->userId,
-                    $query->page
+                    // $query->page
                 );
 
                 return [

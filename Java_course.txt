@@ -1,0 +1,506 @@
+Our curriculum
+Phase 1 — Java fundamentals for a Laravel developer
+
+You'll learn:
+
+Java syntax
+Classes and objects
+Interfaces
+Inheritance
+Composition
+Records
+Enums
+Collections
+Generics
+Exceptions
+Streams
+Lambdas
+Optional
+Annotations
+Maven
+Java packages
+
+But I'll constantly translate concepts into Laravel/PHP equivalents.
+
+For example:
+
+Laravel/PHP	Java/Spring
+PHP class	Java class
+Interface	Java interface
+Composer	Maven
+Eloquent	JPA/Hibernate
+Service class	Service class
+Controller	@RestController
+Middleware	Filter/Interceptor
+.env	Spring configuration
+Laravel Queue	Kafka/RabbitMQ
+PHPUnit/Pest	JUnit
+Laravel migration	Flyway/Liquibase
+Laravel events	Spring events/Kafka
+Phase 2 — Spring Boot
+
+We'll build the first API.
+
+For example:
+
+POST /api/accounts
+{
+  "name": "John Doe",
+  "currency": "NGN"
+}
+
+Response:
+
+{
+  "id": "acc_123",
+  "name": "John Doe",
+  "currency": "NGN",
+  "balance": 0
+}
+
+You'll learn:
+
+Spring Boot
+Dependency Injection
+Controllers
+Services
+DTOs
+Repositories
+Configuration
+Validation
+Exception handling
+REST conventions
+Phase 3 — PostgreSQL + JPA
+
+We'll create actual database tables.
+
+Something like:
+
+users
+accounts
+transactions
+idempotency_keys
+audit_logs
+
+Then you'll learn:
+
+JPA
+Hibernate
+Entity relationships
+One-to-many
+Many-to-one
+Indexes
+Constraints
+Migrations
+Transactions
+Query optimization
+Phase 4 — Authentication & Authorization
+
+We'll implement:
+
+POST /api/auth/register
+POST /api/auth/login
+
+and protect:
+
+GET /api/accounts
+POST /api/transfers
+GET /api/transactions
+
+We'll cover:
+
+Password hashing
+JWT
+Spring Security
+Roles
+Permissions
+Authentication
+Authorization
+Securing endpoints
+
+For example:
+
+USER
+ ├── View own accounts
+ ├── Transfer money
+ └── View own transactions
+
+ADMIN
+ ├── View accounts
+ ├── Freeze accounts
+ ├── View audit logs
+ └── Investigate transactions
+Phase 5 — The interesting part: money transfers
+
+We'll implement:
+
+POST /api/transfers
+{
+  "sourceAccountId": "acc_001",
+  "destinationAccountId": "acc_002",
+  "amount": 50000,
+  "currency": "NGN"
+}
+
+The system needs to guarantee things like:
+
+Source:      ₦100,000
+Transfer:     ₦50,000
+Destination:  ₦20,000
+
+                    ↓
+
+Source:      ₦50,000
+Destination: ₦70,000
+
+And if something fails halfway through, we must not end up with:
+
+Source:      ₦50,000
+Destination: ₦20,000
+
+That's where database transactions become extremely important.
+
+Phase 6 — Concurrency
+
+This is where you'll start thinking like a serious backend engineer.
+
+Imagine two requests arrive simultaneously:
+
+Request A: Transfer ₦80,000
+Request B: Transfer ₦80,000
+
+The account contains:
+
+₦100,000
+
+Without proper concurrency control, both requests might see:
+
+Balance = ₦100,000
+
+and both conclude:
+
+"There is enough money."
+
+You could accidentally allow:
+
+₦100,000
+     ↓
+- ₦80,000
+- ₦80,000
+     ↓
+- ₦60,000
+
+Obviously unacceptable.
+
+We'll learn:
+
+Race conditions
+Isolation levels
+Row locking
+Optimistic locking
+Pessimistic locking
+Atomic database operations
+Deadlocks
+Retry strategies
+
+This is one of the biggest differences between simply knowing a framework and understanding software engineering.
+
+Phase 7 — Idempotency
+
+Suppose the client sends:
+
+POST /api/transfers
+Idempotency-Key: abc123
+
+The request succeeds.
+
+But the network fails before the client receives the response.
+
+The client retries.
+
+Without idempotency:
+
+₦50,000
+   ↓
+Transfer #1
+
+₦50,000
+   ↓
+Transfer #2
+
+The customer loses ₦50,000 twice.
+
+With idempotency:
+
+Request #1
+    ↓
+abc123
+    ↓
+Transfer created
+
+Request #2
+    ↓
+abc123
+    ↓
+Return existing transaction
+
+No duplicate transfer.
+
+This is extremely important in financial APIs.
+
+Phase 8 — Audit logging
+
+We'll record important events:
+
+USER_CREATED
+LOGIN_SUCCESS
+LOGIN_FAILED
+ACCOUNT_CREATED
+TRANSFER_CREATED
+TRANSFER_COMPLETED
+TRANSFER_FAILED
+ACCOUNT_FROZEN
+
+Something like:
+
+audit_logs
+
+id
+user_id
+action
+resource_type
+resource_id
+ip_address
+metadata
+created_at
+
+This teaches you an important enterprise concept:
+
+Knowing what happened is almost as important as making it happen.
+
+Phase 9 — Testing
+
+We'll write:
+
+Unit tests
+
+Test individual components:
+
+TransferService
+AccountService
+AuthenticationService
+Integration tests
+
+Test:
+
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+PostgreSQL
+API tests
+
+We'll test things like:
+
+POST /api/transfers
+
+and verify:
+
+200/201 → successful transfer
+
+400 → invalid request
+
+401 → unauthenticated
+
+403 → unauthorized
+
+404 → account doesn't exist
+
+409 → concurrency/idempotency conflict
+
+422 → insufficient funds
+
+You'll learn JUnit + Mockito + Spring Boot Test + Testcontainers.
+
+Phase 10 — Kafka
+
+Now we'll move beyond a simple application.
+
+When a transfer succeeds:
+
+Transfer Service
+       │
+       ▼
+    Kafka
+       │
+ ┌─────┼───────────┐
+ ▼     ▼           ▼
+Audit  Notification Fraud
+Service Service    Service
+
+Instead of the transfer service directly calling everything:
+
+Transfer
+   ↓
+Audit
+   ↓
+Email
+   ↓
+SMS
+   ↓
+Fraud
+
+we can publish an event:
+
+{
+  "event": "TRANSFER_COMPLETED",
+  "transactionId": "tx_123",
+  "amount": 50000,
+  "currency": "NGN"
+}
+
+Other services can consume it.
+
+That's where you'll start learning event-driven architecture and distributed systems.
+
+Phase 11 — Docker
+
+We'll containerize the application:
+
+Docker
+ ├── Spring Boot API
+ ├── PostgreSQL
+ └── Kafka
+
+You'll learn:
+
+Dockerfile
+Docker images
+Containers
+Docker Compose
+Environment variables
+Container networking
+Persistent volumes
+Phase 12 — Distributed systems
+
+Then we'll deliberately introduce problems.
+
+For example:
+
+Transfer Service
+       ↓
+      Kafka
+       ↓
+Notification Service
+
+What happens if:
+
+Kafka is temporarily unavailable?
+
+What if:
+
+Notification Service crashes?
+
+What if:
+
+the same message arrives twice?
+
+What if:
+
+the database succeeds
+but publishing the event fails?
+
+You'll learn concepts such as:
+
+Eventual consistency
+Message delivery
+At-least-once processing
+Retries
+Dead-letter queues
+Distributed transactions
+Outbox pattern
+Circuit breakers
+Timeouts
+Resilience
+
+This is where system design starts becoming much more concrete.
+
+Phase 13 — Kubernetes
+
+Once the application works in Docker, we'll deploy it conceptually like:
+
+                    Kubernetes
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+      API Pod       API Pod       API Pod
+          │             │             │
+          └─────────────┼─────────────┘
+                        ▼
+                   PostgreSQL
+                        │
+                        ▼
+                      Kafka
+
+You'll learn:
+
+Pods
+Deployments
+Services
+ConfigMaps
+Secrets
+Ingress
+Scaling
+Health checks
+Rolling deployments
+Phase 14 — Cloud
+
+Finally:
+
+Local
+ ↓
+Docker
+ ↓
+Kubernetes
+ ↓
+Cloud
+
+We can then discuss AWS/Azure/GCP equivalents for:
+
+Compute
+Managed PostgreSQL
+Kafka
+Redis
+Object storage
+Secrets
+Monitoring
+Load balancing
+Networking
+
+Comparison
+
+Laravel                         Spring Boot
+
+Route::get(...)          →      @GetMapping(...)
+
+Controller               →      @RestController
+
+Service                  →      @Service
+
+Model/Eloquent           →      @Entity + JPA
+
+Form Request             →      DTO + @Valid
+
+Middleware               →      Filter
+
+.env                     →      application.yml
+
+Queue                    →      Kafka/RabbitMQ
+
+Event                    →      Spring Event/Kafka Event
+
+DB::transaction()        →      @Transactional
+
+PHPUnit                  →      JUnit

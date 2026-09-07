@@ -1,0 +1,2124 @@
+---------Career progression for senior level---------
+
+Phase 1 — Production reliability
+
+RabbitMQ + Redis + Docker + logging + health checks + retries + DLQ.
+
+Phase 2 — Database mastery
+
+MySQL performance, transactions, indexes, locking, query optimization.
+
+Phase 3 — System design
+
+Design and explain systems without coding first.
+
+Phase 4 — Cloud/DevOps
+
+AWS + networking + deployments + infrastructure as code.
+
+Phase 5 — Security
+
+Threat modeling and hardening your application.
+
+Phase 6 — Senior engineering habits
+
+Code reviews, architecture decisions, documentation, mentoring, debugging, trade-offs.
+
+
+PHASE 1  ROADMAP
+
+We’ll do it in this order:
+
+Health checks
+RabbitMQ reliability
+Redis reliability
+Retries
+Dead-letter queues (DLQ)
+Graceful consumer recovery
+Observability
+Failure testing
+Production runbook
+
+1. Health checks
+
+Don't start by writing application code. 
+Start by making Docker understand whether dependencies are actually ready.
+
+rabbitmq:
+  image: rabbitmq:3-management
+  container_name: rabbitmq
+  restart: unless-stopped
+  environment:
+    RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+    RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+  healthcheck:
+    test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+  expose:
+    - "5672"
+    - "15672"
+  networks:
+    - microservices
+
+
+
+redis:
+  image: redis:7-alpine
+  container_name: redis
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  expose:
+    - "6379"
+  networks:
+    - microservices
+
+
+mysql:
+  image: mysql:8.0
+  container_name: mysql
+  restart: unless-stopped
+  environment:
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  healthcheck:
+    test:
+      [
+        "CMD",
+        "mysqladmin",
+        "ping",
+        "-h",
+        "localhost",
+        "-p${MYSQL_ROOT_PASSWORD}"
+      ]
+    interval: 10s
+    timeout: 5s
+    retries: 10
+    start_period: 30s
+  volumes:
+    - mysql-data:/var/lib/mysql
+  networks:
+    - microservices
+
+Then consumers should depend on healthy dependencies, not merely containers existing.
+
+For example:
+
+email-user-consumer:
+  image: sammy48/email-service:latest
+  container_name: email-user-consumer
+  working_dir: /var/www
+  command: php artisan rabbitmq:consume-user-created
+  env_file:
+    - ./email-service/.env
+  depends_on:
+    email:
+      condition: service_started
+    mysql:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+  restart: unless-stopped
+  networks:
+    - microservices
+
+
+ut there's an important distinction
+
+This:
+
+depends_on:
+  - rabbitmq
+
+means essentially:
+
+"Start this container after the RabbitMQ container has been started."
+
+It does not mean:
+
+"RabbitMQ is ready to accept connections."
+
+That's exactly the kind of problem you encountered earlier with:
+
+
+That's exactly the kind of problem you encountered earlier with:
+
+stream_socket_client():
+Unable to connect to tcp://rabbitmq:5672
+(Connection refused)
+
+Your consumer can start before RabbitMQ has finished initializing.
+
+That's a production reliability problem, not merely a Docker problem.
+
+
+2. But don't stop at healthcheck
+
+Here's where I want you to start thinking like a senior engineer.
+
+Even with:
+
+condition: service_healthy
+
+For example:
+
+RabbitMQ starts
+       ↓
+consumer starts
+       ↓
+consumer processes messages
+       ↓
+RabbitMQ crashes
+       ↓
+consumer loses connection
+       ↓
+RabbitMQ comes back
+       ↓
+consumer recovers
+
+A production consumer should not require you to manually SSH into EC2 and restart everything.
+
+So we're going to solve both:
+
+Startup reliability
+
+healthcheck
+    ↓
+depends_on: service_healthy
+
+and
+
+Runtime reliability
+
+RabbitMQ connection lost
+        ↓
+retry
+        ↓
+reconnect
+        ↓
+continue consuming
+
+
+
+Step 3 ← you are here
+
+Test RabbitMQ failure/recovery.
+
+Step 4
+
+Implement proper RabbitMQ reconnect behavior.
+
+Step 5
+
+Implement retry queues.
+
+Step 6
+
+Implement DLQ.
+
+Step 7
+
+Make message processing idempotent.
+
+Step 8
+
+Test Redis failure.
+
+Step 9
+
+Test worker failure.
+
+Step 10
+
+Add meaningful Grafana/Loki alerts.
+
+Step 11
+
+Write a production failure/recovery runbook.
+
+
+✅ Health checks
+✅ Startup connection retry
+➡️ Retry queues + DLQ       ← NOW
+⬜ Reconnection after runtime failure DONE
+⬜ Idempotency DONE
+⬜ Redis failure/recovery DONE
+⬜ Worker failure/recovery
+⬜ Observability/alerts
+⬜ Failure testing
+
+Phase 1
+│
+├── Step 1  Health checks                  ✅
+├── Step 2  Startup connection retry      ✅
+├── Step 3  Failure/recovery testing       ✅
+├── Step 4  Retry queues + DLQ             ✅
+├── Step 5  Runtime reconnection           ← NOW ✅
+│
+├── Step 6  Redis failure/recovery ✅
+├── Step 7  Worker failure/recovery
+├── Step 8  Publisher confirms ✅
+├── Step 9  Idempotency ✅
+├── Step 10 Observability + alerts
+└── Step 11 Full failure-testing runbook ✅
+
+
+Main Loop Overall processes
+
+1. Original processing fails
+          ↓
+2. PHP publishes a NEW message
+   to retry.1
+          ↓
+3. Message sits in retry.1
+          ↓
+4. Wait 5 seconds
+          ↓
+5. TTL expires
+          ↓
+6. RabbitMQ removes it from retry.1
+   AND dead-letters it
+          ↓
+7. RabbitMQ sends it to:
+   app.events
+          ↓
+8. Routing key:
+   auth.loggedin
+          ↓
+9. app.events finds the binding:
+   auth.loggedin → email.user.created
+          ↓
+10. Message enters main queue again
+          ↓
+11. PHP consumer receives it
+          ↓
+12. processMessage() runs again
+
+
+
+Idempotency
+Application logic detects duplicates, but the database constraint guarantees uniqueness.
+
+The solution is
+
+$table->uuid('event_id')->unique();
+
+
+That gives you three different reliability mechanisms, each solving a different problem:
+
+Mechanism	Problem solved
+Retry queues	Temporary business-processing failure
+DLQ	Permanently failed messages
+Reconnection	RabbitMQ infrastructure failure
+Idempotency	Duplicate/redelivered messages
+Publisher confirms	Producer doesn't lose published events
+Health checks	Startup/readiness problems
+
+
+Redis failure/recovery
+
+RabbitMQ message
+     ↓
+process
+     ↓
+Redis fails ❌
+     ↓
+don't ACK RabbitMQ message
+     ↓
+retry
+     ↓
+Redis recovers
+     ↓
+email queued ✅
+     ↓
+ACK RabbitMQ
+
+
+making healthcheck does not magically reconnect Laravel applications.
+
+So keep it.
+
+
+--Worker failure/recovery--
+
+1.Configure email-worker
+
+In your docker-compose.yml, use something like:
+
+email-worker:
+  build:
+    context: ./services/email
+    dockerfile: Dockerfile
+
+  restart: unless-stopped
+
+  depends_on:
+    redis:
+      condition: service_healthy
+
+  command: >
+    php artisan queue:work redis
+    --sleep=3
+    --tries=3
+    --backoff=5
+    --timeout=60
+
+
+2.Add a worker healthcheck
+
+I'd also add a healthcheck.
+
+For example:  
+
+email-worker:
+  ...
+
+  healthcheck:
+    test:
+      [
+        "CMD-SHELL",
+        "php artisan queue:monitor redis:default || exit 1"
+      ]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 20s
+
+So for now, I wouldn't make queue:monitor your main health 
+mechanism unless you've configured Laravel's queue monitoring appropriately.
+
+For your current Docker setup, process restart + logs + queue monitoring is more useful.    
+
+
+3. Understand what happens when the worker crashes
+
+Suppose the worker is processing:
+
+note.created email job
+
+and crashes.
+
+Laravel's queue system uses a visibility/attempt mechanism so a job
+that wasn't successfully completed can become available again.
+
+The lifecycle is roughly:
+
+Redis
+  │
+  ▼
+Worker receives job
+  │
+  ▼
+Job processing
+  │
+  ├── SUCCESS ──────→ job removed
+  │
+  └── FAILURE
+          │
+          ▼
+       retry
+          │
+          ▼
+       attempts++
+
+So you should not manually delete jobs from Redis when a worker fails.
+
+4. Configure retry_after
+
+This is very important.
+
+In config/queue.php, your Redis connection should have something like:
+
+'redis' => [
+    'driver' => 'redis',
+    'connection' => 'default',
+    'queue' => env('REDIS_QUEUE', 'default'),
+    'retry_after' => 90,
+    'block_for' => null,
+],
+
+Then:
+
+worker --timeout=60
+retry_after=90
+
+The general rule is:
+
+retry_after must be greater than the worker timeout.
+
+
+If:
+
+retry_after = 60
+timeout = 60
+
+you can get into ugly situations where the same job 
+becomes available while the original worker may still be finishing it.
+
+Use enough margin.
+
+
+5. Don't make retry_after too small
+
+Bad:
+
+--timeout=60
+retry_after=30
+
+Potentially:
+
+Worker A starts job
+       ↓
+30 seconds
+       ↓
+job becomes available again
+       ↓
+Worker B gets same job
+       ↓
+Worker A still working
+       ↓
+duplicate processing
+
+Better:
+
+--timeout=60
+retry_after=90
+
+
+Phase 2 Database mastery
+
+Phase 2 is where we turn your Laravel microservices 
+from “reliable messaging” into a system that stays fast and correct under load.
+
+
+We’ll learn it by applying each concept directly to your existing Auth / Notes / Email / MySQL architecture—not as isolated database theory.
+
+Phase 2 — Database Mastery
+
+We’ll work through these in order:
+
+MySQL fundamentals & storage
+Indexes
+Query optimization + EXPLAIN
+Transactions
+Isolation levels
+Row locking / deadlocks
+Concurrency
+Pagination at scale
+N+1 queries & Eloquent performance
+Database constraints
+Connection pooling / connection management
+Performance testing
+Production database design
+
+
+Row locking
+
+DB::transaction(function () use ($fromId, $toId, $amount) {
+
+    $from = Account::where('id', $fromId)
+    ->lockForUpdate()
+    ->first();
+
+    $to = Account::where('id', $toId)
+        ->lockForUpdate()
+        ->first();
+
+});
+
+
+This code above causes row deadlock
+
+
+But another person could be doing:
+
+fromId = 20
+toId = 10
+
+They would lock:
+
+20 → 10
+
+Now we have the problem:
+
+Request 1                 Request 2
+
+Lock 10 🔒                Lock 20 🔒
+   ↓                         ↓
+Wants 20 ⏳                Wants 10 ⏳
+   ↓                         ↓
+   └────── DEADLOCK 💥 ──────┘
+
+
+To avoid deadlock
+
+Don't lock based on FROM and TO. Lock based on ID order.
+
+Always:
+
+smaller ID → bigger ID
+
+
+DB::transaction(function () use ($fromId, $toId, $amount) {
+
+    // 1. Decide which account to lock first
+    //    Always smaller ID first.
+    $firstId = min($fromId, $toId);
+    $secondId = max($fromId, $toId);
+
+    // 2. Lock the first account
+    $first = Account::where('id', $firstId)
+        ->lockForUpdate()
+        ->firstOrFail();
+
+    // 3. Lock the second account
+    $second = Account::where('id', $secondId)
+        ->lockForUpdate()
+        ->firstOrFail();
+
+    // 4. Figure out which locked account is FROM
+    $from = $fromId === $firstId ? $first : $second;
+
+    // 5. Figure out which locked account is TO
+    $to = $toId === $firstId ? $first : $second;
+
+    // 6. Take money from FROM
+    $from->decrement('balance', $amount);
+
+    // 7. Give money to TO
+    $to->increment('balance', $amount);
+});
+
+So one request may wait, but they don't create the circular waiting that causes this deadlock.
+
+One sentence to remember (NB)
+
+When a transaction needs to lock multiple rows, 
+make every transaction lock those rows in the same order.
+
+
+11. Laravel/Eloquent performance
+
+
+$users = User::all();
+
+foreach ($users as $user) {
+    echo $user->notes->count();
+}
+
+Potentially:
+
+1 query for users
++
+1 query per user
+
+For 1,000 users:
+
+1001 queries
+
+That's the famous N+1 problem.
+
+Instead:
+
+$users = User::with('notes')->get();
+
+But even that isn't always optimal.
+
+Sometimes:
+
+withCount('notes')
+
+is better:
+
+$users = User::withCount('notes')->get();
+
+And sometimes you shouldn't retrieve the relationship at all.
+
+We'll learn to distinguish these cases.
+
+
+12. Pagination
+
+Note::latest()->paginate(20);
+
+But eventually you need to understand what happens when you're requesting:
+
+page = 100000
+
+MySQL may need to walk past huge numbers of records.
+
+Laravel can provide:
+
+Previous | 1 | 2 | 3 | 4 | Next
+
+Imagine you have 10 million notes.
+
+With normal pagination:
+
+Note::latest()->paginate(20);
+
+When you request a very late page, such as page 500,000, 
+the database may have to skip a huge number of records.
+
+Page 500,000
+↓
+skip millions of rows
+↓
+find the next 20
+
+We'll then introduce cursor/keyset pagination for large datasets
+
+Note::orderBy('id')
+    ->cursorPaginate(20);
+
+This becomes particularly valuable for large datasets.
+
+Cursor pagination works more like:
+
+Last ID seen = 10,000,000
+↓
+find records after/before this position
+↓
+give me 20
+
+Instead of page numbers, you typically get:
+
+Next →
+
+Laravel uses a cursor representing the position of the last item.
+
+If you want cursor pagination with newest notes first, you could do:
+
+Note::orderBy('id', 'desc')
+    ->cursorPaginate(20);
+
+
+Cursor pagination works more like:
+
+Last ID seen = 10,000,000
+↓
+find records after/before this position
+↓
+give me 20 
+
+So cursor pagination is generally much better for very large datasets and infinite scrolling.
+
+Database constraints
+
+Senior engineers don't rely exclusively on application code.
+
+For example, don't rely on:
+
+if (! User::where('email', $email)->exists()) {
+    User::create([...]);
+}
+
+Two requests can race.
+
+Instead, enforce the invariant at the database level:
+
+$table->string('email')->unique();
+
+Likewise:
+
+$table->foreignId('user_id')
+    ->constrained();
+
+and:
+
+$table->string('event_id')->unique();
+
+
+
+$table->index(['user_id', 'created_at']);
+
+is appropriate for:
+
+SELECT *
+FROM notes
+WHERE user_id = 5
+ORDER BY created_at DESC
+LIMIT 20;
+
+If Auth owns users and Notes has a separate database, do not create a MySQL foreign key across services.
+
+In that case:
+
+$table->unsignedBigInteger('user_id');
+
+is perfectly reasonable, and the application/event architecture maintains that relationship.
+
+First we need to establish whether this query:
+
+EXPLAIN
+SELECT *
+FROM notes
+ORDER BY created_at DESC
+LIMIT 20;
+
+Indexes improve reads but consume:
+
+disk space
+memory/buffer pool
+write performance
+maintenance work
+
+
+Exercise 2 — Let's inspect your real workload
+
+Run these four queries:
+
+A
+EXPLAIN ANALYZE
+SELECT *
+FROM notes
+WHERE user_id = 1
+ORDER BY created_at DESC
+LIMIT 20;
+B
+EXPLAIN ANALYZE
+SELECT *
+FROM notes
+ORDER BY created_at DESC
+LIMIT 20;
+C
+EXPLAIN ANALYZE
+SELECT *
+FROM notes
+WHERE title = 'test';
+D
+EXPLAIN ANALYZE
+SELECT *
+FROM notes
+WHERE title LIKE '%test%';
+
+Then paste the outputs.
+
+We're going to compare:
+
+Index lookup
+      vs
+Full table scan
+      vs
+Indexed title lookup
+      vs
+Substring search
+
+And from there I'll show you how MySQL actually decides whether an index is worth using.
+
+
+
+To generate 100000 rows for notes
+INSERT INTO notes (title, content, user_id, created_at, updated_at)
+SELECT
+    CONCAT('Test Note ', n),
+    CONCAT('Test content ', n),
+    ((n - 1) % 100) + 1,
+    NOW() - INTERVAL (n % 365) DAY,
+    NOW() - INTERVAL (n % 365) DAY
+FROM (
+    SELECT
+        a.n
+        + b.n * 10
+        + c.n * 100
+        + d.n * 1000
+        + e.n * 10000
+        + 1 AS n
+    FROM
+        (SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+         UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+         UNION ALL SELECT 8 UNION ALL SELECT 9) a
+    CROSS JOIN
+        (SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+         UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+         UNION ALL SELECT 8 UNION ALL SELECT 9) b
+    CROSS JOIN
+        (SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+         UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+         UNION ALL SELECT 8 UNION ALL SELECT 9) c
+    CROSS JOIN
+        (SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+         UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+         UNION ALL SELECT 8 UNION ALL SELECT 9) d
+    CROSS JOIN
+        (SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+         UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+         UNION ALL SELECT 8 UNION ALL SELECT 9) e
+) numbers;
+
+
+CREATE INDEX notes_created_at_index
+ON notes(created_at);
+
+
+
+Your Notes table is now:
+
+notes
+│
+├── PRIMARY KEY (id)
+│
+├── INDEX (title)
+│
+├── INDEX (user_id, created_at)
+│
+└── INDEX (created_at)
+
+
+
+And each one exists for a different access pattern:
+
+PRIMARY (id)
+    ↓
+Find one note by ID
+
+(title)
+    ↓
+Exact/prefix title lookup
+
+(user_id, created_at)
+    ↓
+Get a user's newest notes
+
+(created_at)
+    ↓
+Get newest notes globally
+
+This is index design based on query patterns.
+
+
+But now comes the tricky question
+
+You might think:
+
+"Great. I'll just add an index to every column."
+
+Don't.
+
+Every index has a cost.
+
+Suppose you execute:
+
+INSERT INTO notes (...);
+
+MySQL now has to maintain:
+
+notes table
+    +
+PRIMARY index
+    +
+title index
+    +
+(user_id, created_at) index
+    +
+created_at index
+
+So indexes improve:
+
+READ performance ↑
+
+but can increase:
+
+WRITE cost ↑
+storage ↑
+memory usage ↑
+maintenance ↑
+
+This is why good database engineering is a balancing act.
+
+
+Phase 3 System Design
+
+The main difference from Phase 2 is that we stop thinking first about tables, classes, and code.
+
+Instead, we’ll learn to go from:
+
+Requirement
+   ↓
+Actors
+   ↓
+API / events
+   ↓
+Data flow
+   ↓
+Components
+   ↓
+Failure modes
+   ↓
+Consistency
+   ↓
+Scaling
+   ↓
+Observability
+How we'll approach each system
+
+For every design, we'll answer these questions before coding:
+
+What are we building?
+What are the functional requirements?
+What are the non-functional requirements?
+What are the major components?
+How does data move through the system?
+Where does state live?
+Where can things fail?
+What happens when a dependency is unavailable?
+What consistency guarantees do we need?
+How does it scale?
+How do we observe and debug it?
+What are the trade-offs?
+
+
+Step 1 — Functional requirements
+
+Let's define what the system must do.
+
+Note API
+
+Users should be able to:
+
+Create note
+Read note
+List notes
+Update note
+Delete note
+
+
+Event processing
+
+When a note is created:
+
+note.created
+
+should be published.
+
+The email service consumes that event and queues an email.
+
+
+Step 2 — Non-functional requirements
+
+Now we ask the more interesting questions.
+
+The system should provide:
+
+Reliability
+
+If RabbitMQ is temporarily down:
+
+Note creation
+      ↓
+    MySQL
+      ↓
+RabbitMQ unavailable
+
+we must not lose the event.
+
+This is where your previous work on the transactional outbox becomes important.
+
+Idempotency
+
+RabbitMQ may deliver the same event more than once.
+
+Therefore:
+
+event #123
+    ↓
+consumer
+    ↓
+process
+
+event #123
+    ↓
+consumer
+    ↓
+DO NOT process twice
+Failure isolation
+
+If Redis is down:
+
+RabbitMQ
+   ↓
+Email Consumer
+   ↓
+Redis ❌
+
+the failure should not bring down the entire system.
+
+Instead:
+
+TransientInfrastructureException
+        ↓
+retry
+        ↓
+retry
+        ↓
+retry
+        ↓
+DLQ
+
+
+
+Step 3 — Architecture
+
+Now we can draw the major boundaries:
+
+┌───────────────┐
+│    Client     │
+└───────┬───────┘
+        │ HTTP
+        ▼
+┌───────────────┐
+│   Notes API   │
+└───────┬───────┘
+        │
+        ▼
+┌─────────────────────┐
+│       MySQL         │
+│                     │
+│ notes               │
+│ outbox_events       │
+└──────────┬──────────┘
+           │
+           │ publish
+           ▼
+┌─────────────────────┐
+│     RabbitMQ        │
+└───────┬─────────────┘
+        │
+        ▼
+┌─────────────────────┐
+│   Email Consumer    │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│       Redis         │
+│                     │
+│ Laravel queue       │
+└─────────────────────┘
+
+The important architectural decision is that MySQL is the source of truth for the note.
+
+RabbitMQ is the messaging mechanism.
+
+Redis is infrastructure for asynchronous email processing.
+
+
+
+Step 4 — Separate the failure domains
+
+This is a major system-design principle.
+
+We have three different failures:
+
+Business failure
+User doesn't exist
+Invalid event
+Invalid note
+
+These generally shouldn't be retried indefinitely.
+
+Business failure
+      ↓
+    DLQ
+    
+Infrastructure failure
+Redis unavailable
+RabbitMQ unavailable
+Database temporarily unavailable
+
+These may recover.
+
+Infrastructure failure
+       ↓
+      retry
+       ↓
+      retry
+       ↓
+      retry
+Worker failure
+
+Suppose:
+
+Email Consumer
+      ↓
+processing event
+      ↓
+PROCESS CRASH
+
+The worker dies.
+
+That's different again.
+
+RabbitMQ should retain the unacknowledged message:
+
+message
+  ↓
+consumer
+  ↓
+worker crashes
+  ↓
+message remains/unacked
+  ↓
+consumer reconnects
+  ↓
+message delivered again
+
+This is why ACK timing is an architectural decision, not merely an implementation detail.
+
+
+Step 5 System  Design
+
+The goal of this Phase is to be able to explain the state 
+transitions and failure paths on a whiteboard before touching the code.
+
+System: Note creation + email notification
+
+A simple first design is:
+
+                    ┌──────────────┐
+                    │    Client    │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │    API       │
+                    │   Service    │
+                    └──────┬───────┘
+                           │
+                           │ write
+                           ▼
+                    ┌──────────────┐
+                    │    MySQL     │
+                    │              │
+                    │ users        │
+                    │ notes        │
+                    │ events       │
+                    └──────┬───────┘
+                           │
+                    publish event
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │  RabbitMQ    │
+                    │              │
+                    │ note.created │
+                    └──────┬───────┘
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │ Email Consumer    │
+                 └─────────┬─────────┘
+                           │
+                           │ queue job
+                           ▼
+                    ┌──────────────┐
+                    │    Redis     │
+                    │              │
+                    │ Laravel Jobs │
+                    │ Idempotency  │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    Email Worker
+                           │
+                           ▼
+                    Mail Provider
+
+
+But before coding, there is an important system-design question:
+
+What happens if each component fails?
+
+That's where the design becomes interesting.
+
+| Component      | Responsibility            | Failure strategy                    |
+| -------------- | ------------------------- | ----------------------------------- |
+| Client         | Sends request             | Retry request if appropriate        |
+| MySQL          | Stores note               | Transaction / rollback              |
+| RabbitMQ       | Transports `note.created` | Retry/reconnect                     |
+| Email consumer | Processes event           | Idempotency + retry                 |
+| Redis          | Queues email job          | Treat temporary outage as transient |
+| Mail worker    | Sends email               | Job retry / failure handling        |
+
+
+The important thing is that each component has a different responsibility.
+
+
+| Component | Responsibility                                 |
+| --------- | ---------------------------------------------- |
+| Client    | Sends HTTP requests                            |
+| MySQL     | Source of truth for application data           |
+| RabbitMQ  | Reliable event delivery between services       |
+| Redis     | Queue infrastructure / temporary state         |
+| Worker    | Executes asynchronous jobs                     |
+| Consumer  | Converts RabbitMQ events into application work |
+
+
+1. Start with the database
+
+When the client creates a note:
+
+POST /notes
+
+        │
+        ▼
+
+      MySQL
+
+MySQL should contain the authoritative note:
+
+notes
+-----
+id
+user_id
+title
+content
+created_at
+updated_at
+
+The first design question is:
+
+How do we make sure the database write and event publication don't get separated?
+
+That's where your previous transactional outbox work belongs.
+
+Conceptually:
+
+BEGIN TRANSACTION
+
+    INSERT note
+
+    INSERT outbox_event
+
+COMMIT
+
+Then another process publishes the outbox event to RabbitMQ.
+
+This avoids:
+
+MySQL succeeds
+      ↓
+RabbitMQ publish fails
+      ↓
+event lost
+
+2. RabbitMQ becomes the event backbone
+
+After the note is created, the system produces:
+
+note.created
+
+The message might conceptually look like:
+
+{
+    "event_id": "...",
+    "event": "note.created",
+    "user_id": 1,
+    "note_id": 123
+}
+
+RabbitMQ's job is delivery, not business logic.
+
+So:
+
+RabbitMQ
+   │
+   ├── Email consumer
+   ├── Notification consumer
+   └── Analytics consumer
+
+One event can therefore have multiple consumers.
+
+3. Redis is not the source of truth
+
+This is an important architectural distinction.
+
+Redis can be used for:
+
+RabbitMQ event
+      ↓
+Email Consumer
+      ↓
+Redis queue
+      ↓
+Email Worker
+
+But if Redis disappears:
+
+Redis DOWN
+
+you don't want your business data disappearing.
+
+Your source of truth remains:
+
+MySQL
+
+Redis is infrastructure that can be rebuilt.
+
+
+4. Now think about failures
+
+This is where the system design becomes interesting.
+
+MySQL failure
+Client
+  ↓
+API
+  ↓
+MySQL ❌
+
+The request fails.
+
+You don't pretend the note was created.
+
+RabbitMQ failure
+Client
+  ↓
+API
+  ↓
+MySQL
+  ↓
+Outbox
+  ↓
+RabbitMQ ❌
+
+The note still exists in MySQL.
+
+The outbox publisher can retry later:
+
+RabbitMQ unavailable
+        ↓
+wait
+        ↓
+retry
+        ↓
+RabbitMQ available
+        ↓
+publish event
+Redis failure
+
+This is different.
+
+Suppose:
+
+RabbitMQ
+   ↓
+Email Consumer
+   ↓
+Redis ❌
+
+The consumer should not ACK the RabbitMQ message merely because Redis is unavailable.
+
+Instead:
+
+Redis failure
+     ↓
+TransientInfrastructureException
+     ↓
+RabbitMQ retry
+     ↓
+Redis recovery
+     ↓
+process again
+
+That's exactly the failure separation you've been implementing.
+
+Worker failure
+
+Suppose Redis accepted the job:
+
+Redis
+  ↓
+Email Worker
+  ↓
+Worker crashes
+
+The job should remain recoverable according to the queue's acknowledgment/visibility semantics.
+
+So the architecture needs to distinguish:
+
+job accepted
+
+from:
+
+job successfully executed
+
+That's the next important design concept.
+
+
+
+YOUR SYSTEM-DESIGN EXERCISE
+
+Before we code anything else, design these four flows:
+
+Flow A — Note creation
+Client → API → MySQL → Outbox → RabbitMQ
+
+Answer:
+
+Where is the transaction?
+What happens if RabbitMQ is down?
+How is the event eventually published?
+
+
+Flow B — Email processing
+RabbitMQ → Consumer → Redis → Worker
+
+Answer:
+
+What happens if Redis is down?
+When is RabbitMQ ACK sent?
+How many times can the message be retried?
+
+
+Flow C — Worker failure
+Redis → Worker → Mail Provider
+
+Answer:
+
+What happens if the worker crashes?
+What happens if the mail provider times out?
+How do you prevent duplicate emails?
+
+
+Flow D — Recovery
+
+Design what happens after:
+
+RabbitMQ DOWN → UP
+Redis DOWN → UP
+MySQL DOWN → UP
+Worker DOWN → UP
+
+
+Step 6 Security Phase
+
+But this phase is specifically about designing the system so that it is secure, not just functional.
+
+
+1. Security threat model
+
+First, identify what we need to protect:
+
+
+                    ┌──────────────┐
+                    │    Client    │
+                    └──────┬───────┘
+                           │
+                    HTTPS / TLS
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │  Application │
+                    └──┬─────┬─────┘
+                       │     │
+              RabbitMQ │     │ Redis
+                       ▼     ▼
+                  ┌────────┐ ┌────────┐
+                  │RabbitMQ│ │ Redis  │
+                  └────────┘ └────────┘
+                       │
+                       ▼
+                  ┌────────┐
+                  │ MySQL  │
+                  └────────┘
+
+
+We should consider:
+
+Authentication
+Authorization
+Input validation
+Data exposure
+Message tampering
+Replay attacks
+Redis security
+RabbitMQ security
+MySQL security
+Secrets
+TLS
+Rate limiting
+Logging and monitoring
+Failure handling
+
+
+2. Client security
+
+The client should never directly access RabbitMQ, Redis, or MySQL.
+
+Bad:
+
+Client ───────► MySQL
+Client ───────► Redis
+Client ───────► RabbitMQ
+
+Correct:
+
+Client ──HTTPS──► Application
+                     │
+                     ├──► MySQL
+                     ├──► Redis
+                     └──► RabbitMQ
+
+This gives the application a security boundary.
+
+The client only gets access to API endpoints.
+
+
+3. Authentication
+
+For your Laravel application, the basic flow is:
+
+Client
+   │
+   │ credentials
+   ▼
+API
+   │
+   ▼
+Authentication
+   │
+   ├── valid ──► authenticated user
+   │
+   └── invalid ► 401
+
+After authentication, every request should have an authenticated identity.
+
+For example:
+
+User #15
+
+Then authorization determines whether User #15 can perform the requested operation.
+
+
+4. Authorization
+
+Authentication answers:
+
+Who are you?
+
+Authorization answers:
+
+Are you allowed to do this?
+
+For your Notes system:
+
+GET /notes/123
+
+should not simply mean:
+
+SELECT * FROM notes WHERE id = 123;
+
+It should enforce ownership:
+
+SELECT *
+FROM notes
+WHERE id = 123
+  AND user_id = 15;
+
+This is extremely important.
+
+
+This is extremely important.
+
+Otherwise:
+
+User A
+   │
+   │ GET /notes/123
+   ▼
+Application
+   │
+   ▼
+Note #123 belongs to User B
+   │
+   ▼
+❌ Data leak
+
+
+Your existing repository method:
+
+Note::where('id', $id)
+    ->where('user_id', $userId)
+    ->firstOrFail();
+
+is therefore doing something security-critical: tenant/resource isolation.
+
+
+5. Input validation
+
+Never trust client input.
+
+For example:
+
+{
+    "title": "...",
+    "content": "..."
+}
+
+The server should validate:
+
+title
+ ├── required
+ ├── string
+ ├── maximum length
+ └── acceptable format
+
+content
+ ├── required
+ ├── string
+ └── maximum length
+
+Security boundary:
+
+UNTRUSTED INPUT
+      │
+      ▼
+VALIDATION
+      │
+      ▼
+APPLICATION
+
+Don't rely on the frontend for validation.
+
+
+6. SQL injection
+
+Your application should use parameterized queries.
+
+Laravel's query builder/Eloquent handles this for normal queries:
+
+Note::where('user_id', $userId)->get();
+
+Conceptually this becomes:
+
+SELECT *
+FROM notes
+WHERE user_id = ?;
+
+rather than constructing:
+
+SELECT *
+FROM notes
+WHERE user_id = '$userId';
+
+Never concatenate untrusted input into SQL.
+
+
+7. RabbitMQ security
+
+RabbitMQ is an internal infrastructure component.
+
+It should not be publicly exposed.
+
+Think:
+
+Internet
+   │
+   X
+RabbitMQ
+
+Instead:
+
+Application network
+        │
+        ▼
+    RabbitMQ
+
+Use RabbitMQ credentials with the minimum permissions required.
+
+Ideally separate credentials by application/service.
+
+For example:
+
+notes-service
+email-service
+
+should not necessarily share one powerful RabbitMQ account.
+
+8. RabbitMQ message security
+
+Remember that messages are also untrusted input.
+
+Even though RabbitMQ is internal, your consumer should validate the message.
+
+For your event:
+
+{
+    "event_id": "...",
+    "event": "note.created",
+    "user_id": 15,
+    "note_id": 123
+}
+
+The consumer should verify:
+
+event exists
+event_id exists
+event type is expected
+user_id is valid
+note_id is valid
+required fields exist
+
+Then:
+
+RabbitMQ message
+       │
+       ▼
+Validate
+       │
+       ├── invalid ──► Business failure / DLQ
+       │
+       └── valid ────► process
+
+
+9. Replay protection
+
+This connects directly to the idempotency work you already did.
+
+Suppose RabbitMQ delivers:
+
+event_id = abc123
+
+twice.
+
+Without protection:
+
+abc123
+  │
+  ├──► send email
+  │
+  └──► send email again
+
+With idempotency:
+
+abc123
+  │
+  ▼
+ProcessedEvent?
+  │
+  ├── YES ──► ACK
+  │
+  └── NO  ──► process
+
+This is both a reliability and security concern because replayed messages can cause duplicate side effects.
+
+
+10. Redis security
+
+Redis should also be internal.
+
+Internet
+   │
+   X
+Redis
+
+The application talks to Redis:
+
+Application
+     │
+     ▼
+   Redis
+
+Don't expose Redis directly to clients.
+
+Redis may contain things such as:
+
+sessions
+cache
+rate-limit counters
+queue data
+temporary state
+
+So compromise of Redis can have serious consequences.
+
+
+11. Rate limiting
+
+Redis becomes particularly useful here.
+
+For example:
+
+POST /login
+
+You could maintain a counter:
+
+login_attempts:user/ip
+
+Conceptually:
+
+Request
+   │
+   ▼
+Redis counter
+   │
+   ├── under limit ──► application
+   │
+   └── over limit ───► 429
+
+Example policy:
+
+5 login attempts / minute
+
+The exact limits should be chosen based on your application rather than hard-coded as a universal rule.
+
+
+12. MySQL security
+
+The application should use a dedicated database user.
+
+Avoid:
+
+Laravel → root
+
+Prefer:
+
+Laravel → application_db_user
+
+with only the privileges the application actually requires.
+
+Also:
+
+Internet
+   X
+MySQL
+
+MySQL should be accessible only from the application/network where necessary.
+
+
+13. Secrets
+
+Do not put credentials directly into source code.
+
+Bad:
+
+$password = 'my-secret-password';
+
+Use environment/configuration:
+
+DB_PASSWORD=...
+RABBITMQ_PASSWORD=...
+REDIS_PASSWORD=...
+
+And protect the environment/secrets store.
+
+The source repository should contain:
+
+code
+configuration templates
+
+not production credentials.
+
+
+TLS encrypts information while it travels from one machine to another.
+
+
+1. What does "data while moving" mean?
+
+Suppose your browser sends your password to your API:
+
+Browser
+   │
+   │  username + password
+   ▼
+API
+
+That information is traveling through a network.
+
+Without encryption, someone who can intercept the network traffic might be able to read it.
+
+
+With HTTPS/TLS:
+
+Browser
+   │
+   │ 🔒 encrypted
+   ▼
+API
+
+The attacker might see that communication is happening, but should not be able to read the protected contents.
+
+2. HTTPS is HTTP + TLS
+
+When you see:
+
+https://example.com
+
+the https means the HTTP communication is protected using TLS.
+
+So:
+
+HTTP
+  +
+TLS
+  =
+HTTPS
+
+For example:
+
+Client ─── HTTPS/TLS ───► API
+
+Your API receives the decrypted HTTP request.
+
+
+3. What about RabbitMQ, Redis and MySQL?
+
+This is where the infrastructure part comes in.
+
+Imagine your application is running in one container/server and RabbitMQ is running somewhere else:
+
+Application
+     │
+     │ RabbitMQ connection
+     ▼
+RabbitMQ
+
+The application might send:
+
+UserCreated
+{
+    "id": 123,
+    "email": "samuel@example.com"
+}
+
+If the connection is not encrypted, that information travels across the network without TLS protection.
+
+With TLS:
+
+Application
+     │
+     │ 🔒 encrypted
+     ▼
+RabbitMQ
+
+The same idea applies to Redis:
+
+Application
+     │
+     │ 🔒 TLS
+     ▼
+Redis
+
+
+And MySQL:
+
+Application
+     │
+     │ 🔒 TLS
+     ▼
+MySQL
+
+
+TLS also helps verify who you're talking to
+
+TLS isn't only about encryption.
+
+It can also help your application verify:
+
+"Am I really talking to my RabbitMQ server, or am I talking to an attacker pretending to be RabbitMQ?"
+
+Certificates are involved in this process.
+
+Conceptually:
+
+Application
+    │
+    │ "Prove you are RabbitMQ"
+    ▼
+RabbitMQ
+    │
+    │ Certificate
+    ▼
+Application verifies it
+    │
+    ↓
+🔒 Encrypted connection
+
+                 ┌──────────────┐
+                 │ API Gateway  │
+                 └──────┬───────┘
+                        │
+                  HTTP/TLS
+                        │
+             ┌──────────┴──────────┐
+             │                     │
+             ▼                     ▼
+        Auth Service          Email Service
+             │                     │
+             │                     │
+             └──────────┬──────────┘
+                        │
+                  RabbitMQ/TLS
+                        │
+                        ▼
+                    RabbitMQ
+
+Email Service
+      │
+      ├──── TLS ────► MySQL
+      │
+      └──── TLS ────► Redis
+
+
+For local Docker development, you can commonly start without TLS.
+
+For production, especially when services/databases communicate across 
+hosts or untrusted networks, you should evaluate TLS for those connections. 
+
+
+15. Logging without leaking secrets
+
+Your logs are also a security boundary.
+
+Avoid:
+
+Log::info('Request', [
+    'password' => $password,
+    'token' => $token,
+]);
+
+Likewise, be careful with your RabbitMQ logs.
+
+You currently log message bodies in some failure paths:
+
+'message' => $message->body,
+
+That can become a security problem if events eventually contain sensitive information.
+
+Prefer logging identifiers:
+
+event_id
+event_name
+user_id
+note_id
+retry_count
+exception type
+
+rather than the entire payload.
+
+
+the security boundaries are:
+
+                 INTERNET
+                    │
+                  HTTPS
+                    │
+                    ▼
+              APPLICATION
+             /      |      \
+            /       |       \
+       secured   secured   secured
+          /         |         \
+       MySQL      Redis     RabbitMQ
+
+
+The key question is:
+
+If an attacker controls the client, what can they reach, what can they modify, and what can they cause the system to do?
+
+That's the right starting point for the Security Phase.       

@@ -1,11 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Notes\Presentation\Http\Controllers\Api\V1\HealthController;
 use Modules\Notes\Presentation\Http\Controllers\Api\V1\NoteController;
 
 // PROTECTED ROUTES
 
 Route::prefix('api/v1')->group(function () {
+    Route::get('/liveness', [HealthController::class, 'liveness']);
+    Route::get('/readiness', [HealthController::class, 'readiness']);
     Route::middleware([
         'auth.service',
         'note_inactive_owner',

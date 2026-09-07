@@ -2,6 +2,7 @@
 
 namespace Modules\Notes\Application\CommandHandlers;
 
+use Illuminate\Support\Str;
 use Modules\Notes\Application\Commands\CreateNoteCommand;
 use Modules\Notes\Application\Contracts\CacheInterface;
 use Modules\Notes\Application\Contracts\EventDispatcherInterface;
@@ -59,6 +60,7 @@ class CreateNoteHandler
         $this->publisher->publish(
             'note.created',
             [
+                'event_id' => (string) Str::uuid(),
                 'event' => 'note.created',
                 'note_id' => $note->id,
                 'user_id' => $note->user_id,

@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Application\CommandHandlers;
 
+use Illuminate\Support\Str;
 use Modules\Auth\Application\Commands\LoginCommand;
 use Modules\Auth\Application\Contracts\EventPublisherInterface;
 use Modules\Auth\Domain\Repositories\AuthRepositoryInterface;
@@ -19,6 +20,8 @@ class LoginHandler
         $user = $this->repo->loginUser($command);
         $this->publisher->publish('auth.loggedin', [
 
+            'event_id' => (string) Str::uuid(),
+            'event' => 'auth.loggedin',
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
