@@ -10,7 +10,7 @@ interface NoteRepositoryInterface
 
     public function getByUser(int $userId);
 
-    public function allUserNotes(int $userId);
+    public function allUserNotes(int $userId, int $page);
 
     public function update(int $id, int $userId, array $data);
 

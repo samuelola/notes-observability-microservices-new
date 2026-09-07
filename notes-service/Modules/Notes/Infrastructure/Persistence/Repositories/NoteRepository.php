@@ -19,7 +19,7 @@ class NoteRepository implements NoteRepositoryInterface
             ->firstOrFail();
     }
 
-    public function allUserNotes(int $userId)
+    public function allUserNotes(int $userId, int $page)
     {
         return Note::forUser($userId)
             ->select(['id', 'user_id', 'title', 'content', 'image_path', 'created_at'])
@@ -38,14 +38,12 @@ class NoteRepository implements NoteRepositoryInterface
     {
         $note = $this->findForUser($id, $userId);
         $note->update($data);
-
         return $note->fresh();
     }
 
     public function delete(int $id, int $userId)
     {
         $note = $this->findForUser($id, $userId);
-
         return $note->delete();
     }
 }

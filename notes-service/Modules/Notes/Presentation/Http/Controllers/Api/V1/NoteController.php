@@ -44,7 +44,7 @@ class NoteController extends Controller
         $user = $request->attributes->get('user');
         $paginator_query = new GetUserNotesQuery(
             $user->id,
-            // $request->get('page', 1)
+            $request->get('page', 1)
         );
 
         $result = $handler->handle($paginator_query);
