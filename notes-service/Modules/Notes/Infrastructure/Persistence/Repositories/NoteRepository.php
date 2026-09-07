@@ -38,12 +38,14 @@ class NoteRepository implements NoteRepositoryInterface
     {
         $note = $this->findForUser($id, $userId);
         $note->update($data);
+
         return $note->fresh();
     }
 
     public function delete(int $id, int $userId)
     {
         $note = $this->findForUser($id, $userId);
+
         return $note->delete();
     }
 }
