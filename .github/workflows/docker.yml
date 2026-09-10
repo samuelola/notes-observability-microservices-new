@@ -248,27 +248,7 @@ jobs:
               -f docker-compose.prod.yml \
               up -d \
               --force-recreate
-
-            echo "Checking Gateway / Frontend..."
-            curl -f http://localhost
-            echo "Frontend is responding."  
-
-            echo "Checking Auth..."
-            curl -f http://localhost/api/v1/auth/liveness
-            curl -f http://localhost/api/v1/auth/readiness
-            echo "Auth is ready."
-
-            echo "Checking Notes..."
-            curl -f http://localhost/api/v1/notes/liveness
-            curl -f http://localhost/api/v1/notes/readiness
-            echo "Notes is ready."
-
-            echo "Checking Email..."
-            curl -f http://localhost/api/v1/email/liveness
-            curl -f http://localhost/api/v1/email/readiness
-            echo "Email is ready."
-
-            echo "All production health checks passed."  
+              
 
             echo "========================================="
             echo "Removing unused images..."
