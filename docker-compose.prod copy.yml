@@ -1,0 +1,382 @@
+services:
+
+  auth:
+    image: sammy48/auth-service:latest
+    container_name: auth-service
+    env_file:
+      - ./auth-service/.env
+    working_dir: /var/www
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    expose:
+      - "8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  notes:
+    image: sammy48/notes-service:latest
+    container_name: notes-service
+    env_file:
+      - ./notes-service/.env
+    working_dir: /var/www
+    command: php artisan serve --host=0.0.0.0 --port=8001
+    expose:
+      - "8001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  email:
+    image: sammy48/email-service:latest
+    container_name: email-service
+    env_file:
+      - ./email-service/.env
+    working_dir: /var/www
+    command: php artisan serve --host=0.0.0.0 --port=8002
+    expose:
+      - "8002"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-p${MYSQL_ROOT_PASSWORD}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s  
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - microservices
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      mysql:
+        condition: service_healthy 
+    networks:
+      - microservices
+
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - microservices  
+
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    expose:
+      - "5672"
+      - "15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - microservices
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    expose:
+      - "6379"
+    networks:
+      - microservices
+
+  notes-consumer:
+    image: sammy48/notes-service:latest
+    container_name: notes-consumer
+    working_dir: /var/www
+    command: php artisan rabbitmq:consume-users
+    env_file:
+      - ./notes-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  notes-consumer-loggedinmsg:
+    image: sammy48/notes-service:latest
+    container_name: notes-consumer-loggedinmsg
+    working_dir: /var/www
+    command: php artisan rabbitmq:consume-user-logged-in
+    env_file:
+      - ./notes-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  email-user-consumer:
+    image: sammy48/email-service:latest
+    container_name: email-user-consumer
+    working_dir: /var/www
+    command: php artisan rabbitmq:consume-user-created
+    env_file:
+      - ./email-service/.env
+    depends_on:
+      email:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  email-note-consumer:
+    image: sammy48/email-service:latest
+    container_name: email-note-consumer
+    working_dir: /var/www
+    command: php artisan rabbitmq:consume-note-created
+    env_file:
+      - ./email-service/.env
+    depends_on:
+      email:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - microservices
+
+  notes-worker:
+    image: sammy48/notes-service:latest
+    container_name: notes-worker
+    working_dir: /var/www
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=60
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php artisan queue:monitor redis:default || exit 1"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    env_file:
+      - ./notes-service/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  email-worker:
+    image: sammy48/email-service:latest
+    container_name: email-worker
+    working_dir: /var/www
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=60
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php artisan queue:monitor redis:default || exit 1"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    env_file:
+      - ./email-service/.env
+    restart: unless-stopped
+    depends_on:
+      email:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - microservices
+
+  gateway:
+    image: sammy48/gateway:latest
+    container_name: api-gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - auth
+      - notes
+      - frontend
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.5.1
+    container_name: nginx-exporter
+    command:
+      - -nginx.scrape-uri=http://api-gateway/nginx_status
+    expose:
+      - "9113"
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  rabbitmq-exporter:
+    image: kbudde/rabbitmq-exporter
+    container_name: rabbitmq-exporter
+    environment:
+      RABBIT_URL: http://rabbitmq:15672
+      RABBIT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBIT_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+    expose:
+      - "9419"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices
+
+  frontend:
+    image: sammy48/notes-frontend:latest
+    container_name: notes-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - microservices
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    networks:
+      - microservices
+
+  loki:
+    image: grafana/loki:3.7.0
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+    expose:
+      - "3100"
+    networks:
+      - microservices
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    restart: unless-stopped
+    volumes:
+      - ./observability/alloy:/etc/alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - run
+      - /etc/alloy/config.alloy
+    networks:
+      - microservices
+
+networks:
+  microservices:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  grafana-data:
+  loki-data:
+  alloy-data:
+  redisinsight_data:
