@@ -1,0 +1,132 @@
+Master Docker properly
+
+Learn:
+
+Docker networking
+volumes
+multi-stage builds
+image optimization
+container health checks
+resource limits
+restart policies
+logging
+secrets
+non-root containers
+Docker image security
+container lifecycle
+
+You should eventually be comfortable looking at a Dockerfile and immediately seeing:
+
+"This image is unnecessarily large."
+
+or:
+
+"This container is running as root."
+
+or:
+
+"This service will lose its data if the container disappears."
+
+
+
+Go deep into AWS
+
+You know EC2 and RDS now.
+
+Next:
+
+Learn these well
+VPC
+├── Public Subnet
+│     └── Load Balancer
+│
+└── Private Subnet
+      ├── EC2
+      └── RDS
+
+Then learn:
+
+Security Groups
+IAM
+IAM roles
+CloudWatch
+Route 53
+ALB
+Auto Scaling Groups
+S3
+ECR
+Secrets Manager
+Systems Manager
+CloudFront
+backups
+Multi-AZ
+read replicas
+
+Eventually your architecture should move away from:
+
+Internet
+   ↓
+EC2 public IP
+
+toward something like:
+
+Internet
+   ↓
+Route 53
+   ↓
+ALB
+   ↓
+EC2 / containers
+   ↓
+Private RDS
+
+
+git push
+   ↓
+GitHub Actions
+   ↓
+Run tests
+   ↓
+Build Docker images
+   ↓
+Security scan
+   ↓
+Push to ECR/Docker Hub
+   ↓
+Deploy
+   ↓
+Health check
+   ↓
+Success
+
+And importantly:
+
+Deployment fails
+       ↓
+Automatic rollback
+
+You should eventually be able to deploy your entire application 
+without manually SSH-ing into EC2 and typing commands.
+
+
+Road map
+
+YOU NOW
+  ↓
+Strong backend fundamentals
+  ↓
+Production-grade microservices
+  ↓
+AWS architecture
+  ↓
+CI/CD + Infrastructure as Code
+  ↓
+Observability + reliability
+  ↓
+Security
+  ↓
+Scalability + distributed systems
+  ↓
+System design
+  ↓
+SENIOR BACKEND/CLOUD ENGINEER
